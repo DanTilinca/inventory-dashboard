@@ -3,7 +3,6 @@
 ![React Version](https://img.shields.io/badge/react-17.0.1-blue.svg)
 ![Node Version](https://img.shields.io/badge/node-14.17.3-green.svg)
 ![MongoDB](https://img.shields.io/badge/database-MongoDB-green.svg)
-![License](https://img.shields.io/badge/license-MIT-orange.svg)
 
 ## 🌟 Project Overview
 
@@ -27,4 +26,4 @@ An operational dashboard that allows supervision teams to effectively monitor an
 
 - **Frontend**: React
 - **Backend**: NodeJS
-- **Database**: MongoDB administered through phpAdmin
+- **Database**: MongoDB
