@@ -157,7 +157,7 @@ function Dashboard() {
 
           <div>
             <strong className="block text-sm font-medium text-gray-500">
-              Sales
+              Sales Revenue
             </strong>
 
             <p>
@@ -191,7 +191,7 @@ function Dashboard() {
 
           <div>
             <strong className="block text-sm font-medium text-gray-500">
-              Purchase
+              Purchase Price
             </strong>
 
             <p>

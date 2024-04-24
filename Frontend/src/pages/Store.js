@@ -29,7 +29,7 @@ function Store() {
     <div className="col-span-12 lg:col-span-10 flex justify-center ">
       <div className=" flex flex-col gap-5 w-11/12 border-2">
         <div className="flex justify-between">
-          <span className="font-bold">Manage Store</span>
+          <span className="font-bold">Manage Stores</span>
           <button
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold p-2 text-xs  rounded"
             onClick={modalSetting}
@@ -41,7 +41,7 @@ function Store() {
         {stores.map((element, index) => {
           return (
             <div
-              className="bg-white w-50 h-fit flex flex-col gap-4 p-4 "
+              className="bg-white w-50 h-fit flex flex-col gap-4 p-4 m-4"
               key={element._id}
             >
               <div>
