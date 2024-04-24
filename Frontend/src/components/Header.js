@@ -4,6 +4,8 @@ import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import AuthContext from '../AuthContext';
 import { Link } from 'react-router-dom';
 
+import GridViewTwoToneIcon from '@mui/icons-material/GridViewTwoTone';
+
 const navigation = [
   { name: 'Dashboard', href: '/', current: true },
   { name: 'Inventory', href: '/inventory', current: false },
@@ -38,7 +40,7 @@ export default function Header() {
   return (
     <>
       <div className="min-h-full">
-        <Disclosure as="nav" className="bg-gray-800">
+        <Disclosure as="nav" className="bg-blue-900">
           {({ open }) => (
             <>
               <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -46,13 +48,9 @@ export default function Header() {
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
                       <div className="flex justify-center items-center gap-2">
-                        <img
-                          className="h-8 w-8"
-                          src={require('../assets/logo.png')}
-                          alt="Inventory Management System"
-                        />
-                        <span className="font-bold text-white italic">
-                          Inventory Dashboard
+                        <GridViewTwoToneIcon className="h-8 w-8 text-white" />
+                        <span className="font-bold text-white italic text-lg">
+                          Stock Master
                         </span>
                       </div>
                     </div>
@@ -61,7 +59,7 @@ export default function Header() {
                     <div className="ml-4 flex items-center md:ml-6">
                       <button
                         type="button"
-                        className="rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
+                        className="rounded-full bg-blue-900 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
                       >
                         <span className="sr-only">View notifications</span>
                         <BellIcon className="h-6 w-6" aria-hidden="true" />

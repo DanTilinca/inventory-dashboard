@@ -1,6 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+import HomeIcon from '@mui/icons-material/Home';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import ReceiptIcon from '@mui/icons-material/Receipt';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import StoreIcon from '@mui/icons-material/Store';
+import MapIcon from '@mui/icons-material/Map';
+
 function SideMenu() {
   const localStorageData = JSON.parse(localStorage.getItem("user"));
 
@@ -10,24 +17,16 @@ function SideMenu() {
         <nav aria-label="Main Nav" className="mt-6 flex flex-col space-y-2">
           <Link
             to="/"
-            className="flex items-center gap-3 rounded-lg hover:bg-blue-100 px-4 py-3 text-blue-700 hover:text-blue-800 transition duration-150 ease-in-out"
+            className="flex items-center gap-3 rounded-lg hover:bg-blue-100 px-4 py-3 text-gray-600 hover:text-blue-800 transition duration-150 ease-in-out"
           >
-            <img
-              alt="dashboard-icon"
-              className="h-6 w-6"
-              src={require("../assets/dashboard-icon.png")}
-            />
+            <HomeIcon />
             <span className="text-base font-semibold">Dashboard</span>
           </Link>
 
           <details className="group [&_summary::-webkit-details-marker]:hidden">
             <summary className="flex cursor-pointer items-center justify-between rounded-lg px-4 py-3 text-gray-600 hover:bg-blue-100 hover:text-blue-800 transition duration-150 ease-in-out">
               <Link to="/inventory" className="flex items-center gap-3">
-                <img
-                  alt="inventory-icon"
-                  className="h-6 w-6"
-                  src={require("../assets/inventory-icon.png")}
-                />
+                <InventoryIcon />
                 <span className="text-base font-semibold">Inventory</span>
               </Link>
             </summary>
@@ -37,38 +36,34 @@ function SideMenu() {
             to="/purchase-details"
             className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-600 hover:bg-blue-100 hover:text-blue-800 transition duration-150 ease-in-out"
           >
-            <img
-              alt="purchase-icon"
-              className="h-6 w-6"
-              src={require("../assets/supplier-icon.png")}
-            />
-            <span className="text-base font-semibold">Purchase Details</span>
+            <ReceiptIcon />
+            <span className="text-base font-semibold">Purchases</span>
           </Link>
 
           <Link
             to="/sales"
             className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-600 hover:bg-blue-100 hover:text-blue-800 transition duration-150 ease-in-out"
           >
-            <img
-              alt="sale-icon"
-              className="h-6 w-6"
-              src={require("../assets/supplier-icon.png")}
-            />
+            <AttachMoneyIcon />
             <span className="text-base font-semibold">Sales</span>
           </Link>
 
           <details className="group [&_summary::-webkit-details-marker]:hidden">
             <summary className="flex cursor-pointer items-center justify-between rounded-lg px-4 py-3 text-gray-600 hover:bg-blue-100 hover:text-blue-800 transition duration-150 ease-in-out">
               <Link to="/manage-store" className="flex items-center gap-3">
-                <img
-                  alt="store-icon"
-                  className="h-6 w-6"
-                  src={require("../assets/order-icon.png")} // Assume you've a specific icon for manage store
-                />
-                <span className="text-base font-semibold">Manage Store</span>
+                <StoreIcon />
+                <span className="text-base font-semibold">Manage Stores</span>
               </Link>
             </summary>
           </details>
+
+          <Link
+            to="/stores-map"
+            className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-600 hover:bg-blue-100 hover:text-blue-800 transition duration-150 ease-in-out"
+          >
+            <MapIcon />
+            <span className="text-base font-semibold">Stores Map</span>
+          </Link>
         </nav>
       </div>
     </div>

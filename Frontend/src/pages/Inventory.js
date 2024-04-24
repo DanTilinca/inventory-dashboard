@@ -257,7 +257,10 @@ function Inventory() {
                       {element.description}
                     </td>
                     <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                      {element.stock > 0 ? "In Stock" : "Not in Stock"}
+                      {element.stock > 0 ? 
+                        <span className="text-green-500">In Stock</span> : 
+                        <span className="text-red-500">Not In Stock</span>
+                      }
                     </td>
                     <td className="whitespace-nowrap px-4 py-2 text-gray-700">
                       <span
