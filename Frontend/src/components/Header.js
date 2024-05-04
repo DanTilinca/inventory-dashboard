@@ -1,10 +1,10 @@
-import { Fragment, useContext } from 'react';
+import { Fragment, useContext, useState } from 'react';
 import { Disclosure, Menu, Transition } from '@headlessui/react';
 import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import AuthContext from '../AuthContext';
 import { Link } from 'react-router-dom';
-
 import GridViewTwoToneIcon from '@mui/icons-material/GridViewTwoTone';
+import InviteCodesModal from './InviteCodeMenu';
 
 const navigation = [
   { name: 'Dashboard', href: '/', current: true },
@@ -14,13 +14,15 @@ const navigation = [
   { name: 'Manage Store', href: '/manage-store', current: false },
 ];
 
-const userNavigation = [{ name: 'Sign Out', href: './login' }];
+const userNavigation = [
+  { name: 'Invite Codes', href: '#' },
+  { name: 'Sign Out', href: './login' },
+];
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ');
 }
 
-// Reusable component for displaying the profile picture or initials
 const ProfilePicture = ({ imageUrl, firstName, lastName }) => {
   if (imageUrl) {
     return <img className="h-8 w-8 rounded-full" src={imageUrl} alt="profile" />;
@@ -34,12 +36,14 @@ const ProfilePicture = ({ imageUrl, firstName, lastName }) => {
 };
 
 export default function Header() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const authContext = useContext(AuthContext);
   const localStorageData = JSON.parse(localStorage.getItem('user')) || {};
   
   return (
     <>
       <div className="min-h-full">
+        <InviteCodesModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
         <Disclosure as="nav" className="bg-blue-900">
           {({ open }) => (
             <>
@@ -65,7 +69,6 @@ export default function Header() {
                         <BellIcon className="h-6 w-6" aria-hidden="true" />
                       </button>
 
-                      {/* Profile dropdown */}
                       <Menu as="div" className="relative ml-3">
                         <div>
                           <Menu.Button className="flex max-w-xs items-center rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
@@ -89,10 +92,15 @@ export default function Header() {
                                   <Link
                                     to={item.href}
                                     className={classNames(active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700')}
+                                    onClick={() => {
+                                      if (item.name === 'Invite Codes') {
+                                        setIsModalOpen(true);
+                                      } else if (item.name === 'Sign Out') {
+                                        authContext.signout();
+                                      }
+                                    }}
                                   >
-                                    <span onClick={() => authContext.signout()}>
-                                      {item.name}{' '}
-                                    </span>
+                                    {item.name}
                                   </Link>
                                 )}
                               </Menu.Item>
@@ -103,7 +111,6 @@ export default function Header() {
                     </div>
                   </div>
                   <div className="-mr-2 flex md:hidden">
-                    {/* Mobile menu button */}
                     <Disclosure.Button className="inline-flex items-center justify-center rounded-md bg-gray-800 p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
                       <span className="sr-only">Open main menu</span>
                       {open ? <XMarkIcon className="block h-6 w-6" aria-hidden="true" /> : <Bars3Icon className="block h-6 w-6" aria-hidden="true" />}

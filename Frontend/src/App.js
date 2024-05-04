@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import Store from "./pages/Store";
 import Sales from "./pages/Sales";
 import PurchaseDetails from "./pages/PurchaseDetails";
+import ClientPage from "./pages/Client";
 
 const App = () => {
   const [user, setUser] = useState("");
@@ -76,6 +77,7 @@ const App = () => {
             <Route path="/purchase-details" element={<PurchaseDetails />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/manage-store" element={<Store />} />
+            <Route path="/client" element={<ClientPage />} />
           </Route>
           <Route path="*" element={<NoPageFound />} />
         </Routes>

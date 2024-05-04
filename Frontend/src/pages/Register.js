@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 
 function Register() {
@@ -13,19 +13,49 @@ function Register() {
 
   const navigate = useNavigate();
 
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [inviteCode, setInviteCode] = useState('');
+  const [inviteCodeError, setInviteCodeError] = useState(false);
+
+  const isValidInviteCode = async (code) => {
+    const response = await fetch(`http://localhost:4000/api/inviteCode/checkInviteCode/${code}`);
+    const data = await response.json();
+
+    return data.valid;
+  };
+
+  const handleRoleChange = (e) => {
+    if (e.target.value === 'admin') {
+      setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
+    }
+  };
+
+  const handleInviteCodeChange = (e) => {
+    setInviteCode(e.target.value);
+  };
+
   // Handling Input change for registration form.
   const handleInputChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   // Register User
-  const registerUser = () => {
+  const registerUser = async (e) => {
+    e.preventDefault();
+
+    if (isAdmin && !(await isValidInviteCode(inviteCode))) {
+      setInviteCodeError(true);
+      return;
+    }
+
     fetch("http://localhost:4000/api/register", {
       method: "POST",
       headers: {
         "Content-type": "application/json",
       },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, isAdmin }),
     })
       .then((result) => {
         alert("Successfully Registered, Now Login with your details");
@@ -117,7 +147,7 @@ function Register() {
                   id="admin"
                   name="role"
                   value="admin"
-                  onChange={handleInputChange}
+                  onChange={handleRoleChange}
                   className="h-4 w-4 text-indigo-600 focus:ring-indigo-600"
                   required
                 />
@@ -132,7 +162,7 @@ function Register() {
                   id="customer"
                   name="role"
                   value="customer"
-                  onChange={handleInputChange}
+                  onChange={handleRoleChange}
                   className="h-4 w-4 text-indigo-600 focus:ring-indigo-600"
                   required
                 />
@@ -143,6 +173,17 @@ function Register() {
                   Customer
                 </label>
               </div>
+              {isAdmin && (
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Enter invite code"
+                    value={inviteCode}
+                    onChange={handleInviteCodeChange}
+                  />
+                  {inviteCodeError && <p>The invite code is invalid.</p>}
+                </div>
+              )}
             </div>
 
             <div>

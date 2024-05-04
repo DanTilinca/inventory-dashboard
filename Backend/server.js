@@ -7,6 +7,7 @@ const salesRoute = require("./router/sales");
 const cors = require("cors");
 const User = require("./models/users");
 const Product = require("./models/Product");
+const inviteCodeRouter = require('./router/inviteCode');
 
 
 const app = express();
@@ -26,6 +27,9 @@ app.use("/api/purchase", purchaseRoute);
 
 // Sales API
 app.use("/api/sales", salesRoute);
+
+// Invite Code API
+app.use('/api/inviteCode', inviteCodeRouter);
 
 // ------------- Signin --------------
 let userAuthCheck;
@@ -66,6 +70,7 @@ app.post("/api/register", (req, res) => {
     password: req.body.password,
     phoneNumber: req.body.phoneNumber,
     imageUrl: req.body.imageUrl,
+    isAdmin: req.body.isAdmin,
   });
 
   registerUser
