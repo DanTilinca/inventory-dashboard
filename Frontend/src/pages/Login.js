@@ -22,7 +22,11 @@ function Login() {
         .then((data) => {
           localStorage.setItem("user", JSON.stringify(data));
           authContext.signin(data._id, () => {
-            navigate("/");
+            if (data.isAdmin) {
+              navigate("/");
+            } else {
+              navigate("/client");
+            }
           });
         })
         .catch((err) => {
