@@ -64,12 +64,12 @@ function Login() {
 
   return (
     <>
-      <div className="flex justify-center items-center h-screen" style={{ backgroundColor: "#6600FF" }}>
+      <div className="flex justify-center items-center h-screen" style={{ backgroundColor: "#6610FF" }}>
         <div className="w-full max-w-md space-y-8 p-10 rounded-lg bg-white">
           <div>
             <img
-              className="mx-auto h-16 w-auto"
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Nokia_wordmark.svg/2560px-Nokia_wordmark.svg.png"
+              className="mx-auto h-70 w-auto"
+              src="https://logolook.net/wp-content/uploads/2022/10/Nokia-Log%D0%BE.png"
               alt="Nokia Logo"
             />
             <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
@@ -78,7 +78,7 @@ function Login() {
           </div>
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div className="-space-y-px rounded-md shadow-sm">
-              <div>
+              <div className="mb-3">
                 <label htmlFor="email-address" className="sr-only">
                   Email address
                 </label>

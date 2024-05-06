@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import "./index.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
+import ClientLayout from "./components/LayoutClient";
 import Inventory from "./pages/Inventory";
 import NoPageFound from "./pages/NoPageFound";
 import AuthContext from "./AuthContext";
@@ -19,13 +20,11 @@ const App = () => {
   const [user, setUser] = useState("");
   const [loader, setLoader] = useState(true);
   let myLoginUser = JSON.parse(localStorage.getItem("user"));
-  // console.log("USER: ",user)
 
   useEffect(() => {
     if (myLoginUser) {
       setUser(myLoginUser._id);
       setLoader(false);
-      // console.log("inside effect", myLoginUser)
     } else {
       setUser("");
       setLoader(false);
@@ -77,7 +76,16 @@ const App = () => {
             <Route path="/purchase-details" element={<PurchaseDetails />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/manage-store" element={<Store />} />
-            <Route path="/client" element={<ClientPage />} />
+          </Route>
+          <Route
+            path="/client"
+            element={
+              <ProtectedWrapper>
+                <ClientLayout />
+              </ProtectedWrapper>
+            }
+          >
+            <Route index element={<ClientPage />} />
           </Route>
           <Route path="*" element={<NoPageFound />} />
         </Routes>
