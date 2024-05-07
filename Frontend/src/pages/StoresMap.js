@@ -2,11 +2,10 @@ import React, { useState, useEffect } from "react";
 
 const StoresMap = () => {
   const [map, setMap] = useState(null);
-  const [geocoder, setGeocoder] = useState(null);
-  const [storeLocations, setStoreLocations] = useState([]);
-  const [newAddress, setNewAddress] = useState("");
+  const [stores, setStores] = useState([]);
 
   useEffect(() => {
+    // Load Google Maps API
     const loadGoogleMapsAPI = () => {
       const script = document.createElement("script");
       script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyD2-WENmDCAWho2OqjKMJCHTIHvKUCl3G8&libraries=places`;
@@ -16,72 +15,88 @@ const StoresMap = () => {
       document.head.appendChild(script);
     };
 
-    const initMap = () => {
+    // Initialize Map and Markers
+    const initMap = async () => {
       const mapOptions = {
-        center: { lat: 0, lng: 0 },
-        zoom: 8,
+        center: { lat: 45.9432, lng: 24.9668 },
+        zoom: 7,
       };
 
-      const map = new window.google.maps.Map(document.getElementById("map"), mapOptions);
+      const map = new window.google.maps.Map(
+        document.getElementById("map"),
+        mapOptions
+      );
       setMap(map);
-      setGeocoder(new window.google.maps.Geocoder());
 
-      // Încărcăm locațiile salvate din storage
-      const storedLocations = JSON.parse(localStorage.getItem("storeLocations"));
-      if (storedLocations) {
-        setStoreLocations(storedLocations);
-        // Plasăm marker-ele pe hartă pentru locațiile salvate
-        storedLocations.forEach((location) => {
-          new window.google.maps.Marker({
-            position: location,
-            map: map,
+      try {
+        // Fetch Store Data
+        const response = await fetch("http://localhost:4000/api/store/get");
+        const locations = await response.json();
+        setStores(locations);
+
+        // Place Markers
+        locations.forEach((location) => {
+          const { name, address, category, city, image } = location;
+          const fullAddress = `${address}, ${city}`;
+          const geocoder = new window.google.maps.Geocoder();
+
+          geocoder.geocode({ address: fullAddress }, (results, status) => {
+            if (status === "OK" && results[0]) {
+              const marker = new window.google.maps.Marker({
+                position: results[0].geometry.location,
+                map,
+                title: name,
+              });
+
+              const infoWindow = new window.google.maps.InfoWindow({
+                content: `<div>
+                            <h3>${name}</h3>
+                            <p>${fullAddress}</p>
+                            <p>Category: ${category}</p>
+                            <img src="${image}" alt="${name}" style="max-width: 100px; max-height: 100px; object-fit: cover;"/>
+                            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs">
+                              More details
+                            </button>
+                          </div>`,
+              });
+
+              marker.addListener("click", () => {
+                infoWindow.open(map, marker);
+              });
+            } else {
+              console.error(
+                "Geocode was not successful for the following reason:",
+                status
+              );
+            }
           });
         });
+      } catch (error) {
+        console.error("Error fetching store locations:", error);
       }
     };
 
+    // Load Google Maps API
     loadGoogleMapsAPI();
 
+    // Cleanup Google Maps API
     return () => {
-      const script = document.querySelector('script[src^="https://maps.googleapis.com"]');
+      const script = document.querySelector(
+        'script[src^="https://maps.googleapis.com"]'
+      );
       if (script) {
         script.remove();
       }
     };
   }, []);
 
-  const addStoreLocation = () => {
-    geocoder.geocode({ address: newAddress }, (results, status) => {
-      if (status === "OK") {
-        const location = results[0].geometry.location;
-        setStoreLocations([...storeLocations, location]);
-        setNewAddress("");
-        // Plasăm marker-ul pe hartă pentru locația nou adăugată
-        new window.google.maps.Marker({
-          position: location,
-          map: map,
-        });
-        // Salvăm locațiile în storage
-        localStorage.setItem("storeLocations", JSON.stringify([...storeLocations, location]));
-      } else {
-        alert("Nu s-au putut găsi coordonate pentru adresa introdusă.");
-      }
-    });
-  };
-
   return (
-    <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "right" }}>
-      <nav></nav>
-      <div id="map" style={{ width: "500%", height: "70vh", marginTop: "20px" }}></div>
-      <div style={{ marginTop: "70px" }}>
-        <input
-          type="text"
-          placeholder="Introduceți adresa magazinului"
-          value={newAddress}
-          onChange={(e) => setNewAddress(e.target.value)}
-        />
-        <button onClick={addStoreLocation}>Adăugare magazin</button>
-      </div>
+    <div className="w-full flex flex-col items-center">
+      <nav className="w-full"></nav>
+      <div
+        id="map"
+        className="w-[80vw] h-[80vh] ml-auto border border-gray-300 rounded-lg"
+      ></div>
     </div>
   );
 };

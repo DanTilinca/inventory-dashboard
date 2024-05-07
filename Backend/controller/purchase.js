@@ -24,7 +24,7 @@ const addPurchase = (req, res) => {
 
 // Get All Purchase Data
 const getPurchaseData = async (req, res) => {
-  const findAllPurchaseData = await Purchase.find({"userID": req.params.userID})
+  const findAllPurchaseData = await Purchase.find({})
     .sort({ _id: -1 })
     .populate("ProductID"); // -1 for descending order
   res.json(findAllPurchaseData);
@@ -33,7 +33,7 @@ const getPurchaseData = async (req, res) => {
 // Get total purchase amount
 const getTotalPurchaseAmount = async (req, res) => {
   let totalPurchaseAmount = 0;
-  const purchaseData = await Purchase.find({"userID": req.params.userID});
+  const purchaseData = await Purchase.find({});
   purchaseData.forEach((purchase) => {
     totalPurchaseAmount += purchase.TotalPurchaseAmount;
   });
