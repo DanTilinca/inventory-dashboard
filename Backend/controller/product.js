@@ -2,13 +2,13 @@ const Product = require("../models/Product");
 const Purchase = require("../models/purchase");
 const Sales = require("../models/sales");
 
-// Add Post
+// Add Product
 const addProduct = (req, res) => {
   console.log("req: ", req.body.userId);
   const addProduct = new Product({
     userID: req.body.userId,
     name: req.body.name,
-    manufacturer: req.body.manufacturer,
+    category: req.body.category,
     stock: 0,
     description: req.body.description,
   });
@@ -25,9 +25,7 @@ const addProduct = (req, res) => {
 
 // Get All Products
 const getAllProducts = async (req, res) => {
-  const findAllProducts = await Product.find({
-    userID: req.params.userId,
-  }).sort({ _id: -1 }); // -1 for descending;
+  const findAllProducts = await Product.find({}).sort({ _id: -1 }); // -1 for descending;
   res.json(findAllProducts);
 };
 
@@ -53,7 +51,7 @@ const updateSelectedProduct = async (req, res) => {
       { _id: req.body.productID },
       {
         name: req.body.name,
-        manufacturer: req.body.manufacturer,
+        category: req.body.category,
         description: req.body.description,
       },
       { new: true }

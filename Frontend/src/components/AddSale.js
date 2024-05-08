@@ -1,6 +1,7 @@
 import { Fragment, useRef, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import ExclamationIcon from '@mui/icons-material/PriorityHighOutlined';
+import PlusIcon from '@mui/icons-material/AddOutlined';
 
 export default function AddSale({
   addSaleModalSetting,
@@ -18,16 +19,51 @@ export default function AddSale({
     totalSaleAmount: "",
   });
   const [open, setOpen] = useState(true);
+  const [error, setError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [maxStock, setMaxStock] = useState(0);
+  const [stockText, setStockText] = useState("");
   const cancelButtonRef = useRef(null);
-
 
   // Handling Input Change for input fields
   const handleInputChange = (key, value) => {
     setSale({ ...sale, [key]: value });
+
+    if (key === "productID") {
+      const selectedProduct = products.find(product => product._id === value);
+      setMaxStock(selectedProduct ? selectedProduct.stock : 0);
+      setStockText(selectedProduct ? <span className="text-md font-bold">Stock: {selectedProduct.stock}</span> : "");
+    }
+
+    if (key === "stockSold" && value > maxStock) {
+      setError(true);
+      setErrorMessage(`Cannot sell more than ${maxStock} units.`);
+    } else {
+      setError(false);
+      setErrorMessage("");
+    }
+  };
+
+  // Validate if all fields are filled
+  const isFormValid = () => {
+    return (
+      sale.productID &&
+      sale.storeID &&
+      sale.stockSold &&
+      sale.saleDate &&
+      sale.totalSaleAmount &&
+      !error
+    );
   };
 
   // POST Data
   const addSale = () => {
+    if (!isFormValid()) {
+      setError(true);
+      setErrorMessage("All fields are required.");
+      return;
+    }
+
     fetch("http://localhost:4000/api/sales/add", {
       method: "POST",
       headers: {
@@ -108,7 +144,7 @@ export default function AddSale({
                                 handleInputChange(e.target.name, e.target.value)
                               }
                             >
-                              <option selected="">Select Product</option>
+                              <option value="">Select Product</option>
                               {products.map((element, index) => {
                                 return (
                                   <option key={element._id} value={element._id}>
@@ -117,6 +153,11 @@ export default function AddSale({
                                 );
                               })}
                             </select>
+                            {stockText && (
+                              <p className="text-sm text-gray-600 mt-2">
+                                {stockText}
+                              </p>
+                            )}
                           </div>
                           <div>
                             <label
@@ -133,7 +174,7 @@ export default function AddSale({
                               onChange={(e) =>
                                 handleInputChange(e.target.name, e.target.value)
                               }
-                              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                              className={`bg-gray-50 border ${error ? "border-red-500" : "border-gray-300"} text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500`}
                               placeholder="Quantity Sold"
                             />
                           </div>
@@ -153,7 +194,7 @@ export default function AddSale({
                                 handleInputChange(e.target.name, e.target.value)
                               }
                             >
-                              <option selected="">Select Store</option>
+                              <option value="">Select Store</option>
                               {stores.map((element, index) => {
                                 return (
                                   <option key={element._id} value={element._id}>
@@ -183,11 +224,6 @@ export default function AddSale({
                             />
                           </div>
                           <div className="h-fit w-fit">
-                            {/* <Datepicker
-                              onChange={handleChange}
-                              show={show}
-                              setShow={handleClose}
-                            /> */}
                             <label
                               className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                               htmlFor="salesDate"
@@ -206,32 +242,23 @@ export default function AddSale({
                             />
                           </div>
                         </div>
-                        <div className="flex items-center space-x-4">
-                          {/* <button
-                            type="submit"
-                            className="text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-                          >
-                            Update product
-                          </button> */}
-                          {/* <button
-                            type="button"
-                            className="text-red-600 inline-flex items-center hover:text-white border border-red-600 hover:bg-red-600 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900"
-                          >
-                            <svg
-                              className="mr-1 -ml-1 w-5 h-5"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                fill-rule="evenodd"
-                                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                                clip-rule="evenodd"
-                              ></path>
-                            </svg>
-                            Delete
-                          </button> */}
-                        </div>
+                        {error && (
+                          <div className="rounded-md bg-red-50 p-4">
+                            <div className="flex">
+                              <div className="flex-shrink-0">
+                                <ExclamationIcon
+                                  className="h-5 w-5 text-red-400"
+                                  aria-hidden="true"
+                                />
+                              </div>
+                              <div className="ml-3">
+                                <h3 className="text-sm font-medium text-red-800">
+                                  {errorMessage}
+                                </h3>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </form>
                     </div>
                   </div>
@@ -239,8 +266,9 @@ export default function AddSale({
                 <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                   <button
                     type="button"
-                    className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto"
+                    className={`inline-flex w-full justify-center rounded-md ${!isFormValid() ? "bg-gray-300 cursor-not-allowed" : "bg-blue-600"} px-3 py-2 text-sm font-semibold text-white shadow-sm ${!isFormValid() ? "" : "hover:bg-blue-500"} sm:ml-3 sm:w-auto`}
                     onClick={addSale}
+                    disabled={!isFormValid()}
                   >
                     Add Sale
                   </button>

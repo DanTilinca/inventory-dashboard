@@ -5,38 +5,13 @@ import { Doughnut } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
-export const data = {
-  labels: ["Electronics", "Furniture", "Vegetables", "Fruits", "Books", "Cars"],
-  datasets: [
-    {
-      label: "# of Votes",
-      data: [3, 1, 5, 8, 9, 15],
-      backgroundColor: [
-        "rgba(255, 99, 132, 0.2)",
-        "rgba(54, 162, 235, 0.2)",
-        "rgba(255, 206, 86, 0.2)",
-        "rgba(75, 192, 192, 0.2)",
-        "rgba(153, 102, 255, 0.2)",
-        "rgba(255, 159, 64, 0.2)",
-      ],
-      borderColor: [
-        "rgba(255, 99, 132, 1)",
-        "rgba(54, 162, 235, 1)",
-        "rgba(255, 206, 86, 1)",
-        "rgba(75, 192, 192, 1)",
-        "rgba(153, 102, 255, 1)",
-        "rgba(255, 159, 64, 1)",
-      ],
-      borderWidth: 1,
-    },
-  ],
-};
 
 function Dashboard() {
   const [saleAmount, setSaleAmount] = useState("");
   const [purchaseAmount, setPurchaseAmount] = useState("");
   const [stores, setStores] = useState([]);
   const [products, setProducts] = useState([]);
+  const [categoriesData, setCategoriesData] = useState({ labels: [], data: [] });
 
   const [chart, setChart] = useState({
     options: {
@@ -81,6 +56,20 @@ function Dashboard() {
     });
   };
 
+  // Update Doughnut Data
+  const updateDoughnutData = (products) => {
+    const categoryCount = {};
+
+    products.forEach((product) => {
+      categoryCount[product.category] = (categoryCount[product.category] || 0) + 1;
+    });
+
+    setCategoriesData({
+      labels: Object.keys(categoryCount),
+      data: Object.values(categoryCount),
+    });
+  };
+
   const authContext = useContext(AuthContext);
 
   useEffect(() => {
@@ -93,34 +82,33 @@ function Dashboard() {
 
   // Fetching total sales amount
   const fetchTotalSaleAmount = () => {
-    fetch(
-      `http://localhost:4000/api/sales/get/${authContext.user}/totalsaleamount`
-    )
+    fetch(`http://localhost:4000/api/sales/get/totalsaleamount`)
       .then((response) => response.json())
       .then((datas) => setSaleAmount(datas.totalSaleAmount));
   };
 
   // Fetching total purchase amount
   const fetchTotalPurchaseAmount = () => {
-    fetch(
-      `http://localhost:4000/api/purchase/get/${authContext.user}/totalpurchaseamount`
-    )
+    fetch(`http://localhost:4000/api/purchase/get/totalpurchaseamount`)
       .then((response) => response.json())
       .then((datas) => setPurchaseAmount(datas.totalPurchaseAmount));
   };
 
   // Fetching all stores data
   const fetchStoresData = () => {
-    fetch(`http://localhost:4000/api/store/get/${authContext.user}`)
+    fetch(`http://localhost:4000/api/store/get`)
       .then((response) => response.json())
       .then((datas) => setStores(datas));
   };
 
   // Fetching Data of All Products
   const fetchProductsData = () => {
-    fetch(`http://localhost:4000/api/product/get/${authContext.user}`)
+    fetch(`http://localhost:4000/api/product/get`)
       .then((response) => response.json())
-      .then((datas) => setProducts(datas))
+      .then((datas) => {
+        setProducts(datas);
+        updateDoughnutData(datas);
+      })
       .catch((err) => console.log(err));
   };
 
@@ -134,27 +122,8 @@ function Dashboard() {
 
   return (
     <>
-      <div className="grid grid-cols-1 col-span-12 lg:col-span-10 gap-6 md:grid-cols-3 lg:grid-cols-4  p-4 ">
-        <article className="flex flex-col gap-4 rounded-lg border  border-gray-100 bg-white p-6  ">
-          <div className="inline-flex gap-2 self-end rounded bg-green-100 p-1 text-green-600">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-              />
-            </svg>
-
-            <span className="text-xs font-medium"> 67.81% </span>
-          </div>
-
+      <div className="grid grid-cols-1 col-span-12 lg:col-span-10 gap-6 md:grid-cols-3 lg:grid-cols-4 p-4">
+        <article className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-6">
           <div>
             <strong className="block text-sm font-medium text-gray-500">
               Sales Revenue
@@ -164,31 +133,11 @@ function Dashboard() {
               <span className="text-2xl font-medium text-gray-900">
                 ${saleAmount}
               </span>
-
             </p>
           </div>
         </article>
 
-        <article className="flex flex-col  gap-4 rounded-lg border border-gray-100 bg-white p-6 ">
-          <div className="inline-flex gap-2 self-end rounded bg-red-100 p-1 text-red-600">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
-              />
-            </svg>
-
-            <span className="text-xs font-medium"> 67.81% </span>
-          </div>
-
+        <article className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-6">
           <div>
             <strong className="block text-sm font-medium text-gray-500">
               Purchase Price
@@ -199,30 +148,10 @@ function Dashboard() {
                 {" "}
                 ${purchaseAmount}{" "}
               </span>
-
             </p>
           </div>
         </article>
-        <article className="flex flex-col   gap-4 rounded-lg border border-gray-100 bg-white p-6 ">
-          <div className="inline-flex gap-2 self-end rounded bg-red-100 p-1 text-red-600">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
-              />
-            </svg>
-
-            <span className="text-xs font-medium"> 67.81% </span>
-          </div>
-
+        <article className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-6">
           <div>
             <strong className="block text-sm font-medium text-gray-500">
               Total Products
@@ -233,31 +162,10 @@ function Dashboard() {
                 {" "}
                 {products.length}{" "}
               </span>
-
-              {/* <span className="text-xs text-gray-500"> from $404.32 </span> */}
             </p>
           </div>
         </article>
-        <article className="flex flex-col   gap-4 rounded-lg border border-gray-100 bg-white p-6 ">
-          <div className="inline-flex gap-2 self-end rounded bg-red-100 p-1 text-red-600">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
-              />
-            </svg>
-
-            <span className="text-xs font-medium"> 67.81% </span>
-          </div>
-
+        <article className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-6">
           <div>
             <strong className="block text-sm font-medium text-gray-500">
               Total Stores
@@ -268,13 +176,14 @@ function Dashboard() {
                 {" "}
                 {stores.length}{" "}
               </span>
-
-              {/* <span className="text-xs text-gray-500"> from 0 </span> */}
             </p>
           </div>
         </article>
         <div className="flex justify-around bg-white rounded-lg py-8 col-span-full justify-center">
           <div>
+            <strong className="block text-sm font-medium text-gray-500 mb-2">
+              Revenue per Month
+            </strong>
             <Chart
               options={chart.options}
               series={chart.series}
@@ -283,7 +192,37 @@ function Dashboard() {
             />
           </div>
           <div>
-            <Doughnut data={data} />
+            <strong className="block text-sm font-medium text-gray-500 mb-2">
+              Products by Category
+            </strong>
+            <Doughnut
+              data={{
+                labels: categoriesData.labels,
+                datasets: [
+                  {
+                    label: "Number of Products",
+                    data: categoriesData.data,
+                    backgroundColor: [
+                      "rgba(255, 99, 132, 0.2)",
+                      "rgba(54, 162, 235, 0.2)",
+                      "rgba(255, 206, 86, 0.2)",
+                      "rgba(75, 192, 192, 0.2)",
+                      "rgba(153, 102, 255, 0.2)",
+                      "rgba(255, 159, 64, 0.2)",
+                    ],
+                    borderColor: [
+                      "rgba(255, 99, 132, 1)",
+                      "rgba(54, 162, 235, 1)",
+                      "rgba(255, 206, 86, 1)",
+                      "rgba(75, 192, 192, 1)",
+                      "rgba(153, 102, 255, 1)",
+                      "rgba(255, 159, 64, 1)",
+                    ],
+                    borderWidth: 1,
+                  },
+                ],
+              }}
+            />
           </div>
         </div>
       </div>

@@ -7,19 +7,32 @@ function PurchaseDetails() {
   const [purchase, setAllPurchaseData] = useState([]);
   const [products, setAllProducts] = useState([]);
   const [updatePage, setUpdatePage] = useState(true);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "ascending" });
 
   const authContext = useContext(AuthContext);
 
   useEffect(() => {
     fetchPurchaseData();
     fetchProductsData();
-  }, [updatePage]);
+  }, [updatePage, sortConfig]);
 
   // Fetching Data of All Purchase items
   const fetchPurchaseData = () => {
-    fetch(`http://localhost:4000/api/purchase/get/${authContext.user}`)
+    fetch(`http://localhost:4000/api/purchase/get`)
       .then((response) => response.json())
       .then((data) => {
+        // Apply sorting
+        if (sortConfig.key) {
+          data = data.sort((a, b) => {
+            if (a[sortConfig.key] < b[sortConfig.key]) {
+              return sortConfig.direction === "ascending" ? -1 : 1;
+            }
+            if (a[sortConfig.key] > b[sortConfig.key]) {
+              return sortConfig.direction === "ascending" ? 1 : -1;
+            }
+            return 0;
+          });
+        }
         setAllPurchaseData(data);
       })
       .catch((err) => console.log(err));
@@ -27,7 +40,7 @@ function PurchaseDetails() {
 
   // Fetching Data of All Products
   const fetchProductsData = () => {
-    fetch(`http://localhost:4000/api/product/get/${authContext.user}`)
+    fetch(`http://localhost:4000/api/product/get`)
       .then((response) => response.json())
       .then((data) => {
         setAllProducts(data);
@@ -35,15 +48,23 @@ function PurchaseDetails() {
       .catch((err) => console.log(err));
   };
 
-  // Modal for Sale Add
+  // Modal for Purchase Add
   const addSaleModalSetting = () => {
     setPurchaseModal(!showPurchaseModal);
   };
 
-  
   // Handle Page Update
   const handlePageUpdate = () => {
     setUpdatePage(!updatePage);
+  };
+
+  // Handle Sort
+  const handleSort = (key) => {
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
   };
 
   return (
@@ -54,10 +75,10 @@ function PurchaseDetails() {
             addSaleModalSetting={addSaleModalSetting}
             products={products}
             handlePageUpdate={handlePageUpdate}
-            authContext = {authContext}
+            authContext={authContext}
           />
         )}
-        {/* Table  */}
+        {/* Table */}
         <div className="overflow-x-auto rounded-lg border bg-white border-gray-200 ">
           <div className="flex justify-between pt-5 pb-3 px-3">
             <div className="flex gap-4 justify-center items-center ">
@@ -68,7 +89,6 @@ function PurchaseDetails() {
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold p-2 text-xs  rounded"
                 onClick={addSaleModalSetting}
               >
-                {/* <Link to="/inventory/add-product">Add Product</Link> */}
                 Add Purchase
               </button>
             </div>
@@ -76,26 +96,46 @@ function PurchaseDetails() {
           <table className="min-w-full divide-y-2 divide-gray-200 text-sm">
             <thead>
               <tr>
-                <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
+                <th
+                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
+                  onClick={() => handleSort("ProductID.name")}
+                >
                   Product Name
+                  {sortConfig.key === "ProductID.name" &&
+                    (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
                 </th>
-                <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
+                <th
+                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
+                  onClick={() => handleSort("QuantityPurchased")}
+                >
                   Quantity Purchased
+                  {sortConfig.key === "QuantityPurchased" &&
+                    (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
                 </th>
-                <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
+                <th
+                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
+                  onClick={() => handleSort("PurchaseDate")}
+                >
                   Purchase Date
+                  {sortConfig.key === "PurchaseDate" &&
+                    (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
                 </th>
-                <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
+                <th
+                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
+                  onClick={() => handleSort("TotalPurchaseAmount")}
+                >
                   Total Purchase Amount
+                  {sortConfig.key === "TotalPurchaseAmount" &&
+                    (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
                 </th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-gray-200">
-              {purchase.map((element, index) => {
+              {purchase.map((element) => {
                 return (
                   <tr key={element._id}>
-                    <td className="whitespace-nowrap px-4 py-2  text-gray-900">
+                    <td className="whitespace-nowrap px-4 py-2 text-gray-900">
                       {element.ProductID?.name}
                     </td>
                     <td className="whitespace-nowrap px-4 py-2 text-gray-700">

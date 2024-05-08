@@ -11,7 +11,7 @@ const ProductSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    manufacturer: {
+    category: {
       type: String,
       required: true,
     },
@@ -23,7 +23,6 @@ const ProductSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
 
 const Product = mongoose.model("product", ProductSchema);
 module.exports = Product;
