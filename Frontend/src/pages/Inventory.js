@@ -3,35 +3,63 @@ import AddProduct from "../components/AddProduct";
 import UpdateProduct from "../components/UpdateProduct";
 import AuthContext from "../AuthContext";
 
+const categories = ["All", "Electronics", "Groceries", "Healthcare", "Others"];
+
 function Inventory() {
   const [showProductModal, setShowProductModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateProduct, setUpdateProduct] = useState([]);
   const [products, setAllProducts] = useState([]);
-  const [searchTerm, setSearchTerm] = useState();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [updatePage, setUpdatePage] = useState(true);
   const [stores, setAllStores] = useState([]);
   const [lowStockCount, setLowStockCount] = useState(0);
   const [outOfStockCount, setOutOfStockCount] = useState(0);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "ascending" });
 
   const authContext = useContext(AuthContext);
 
   useEffect(() => {
     fetchProductsData();
     fetchSalesData();
-  }, [updatePage]);
+  }, [updatePage, selectedCategory, searchTerm, sortConfig]);
 
   // Fetching Data of All Products
   const fetchProductsData = () => {
     fetch(`http://localhost:4000/api/product/get`)
       .then((response) => response.json())
       .then((data) => {
-        setAllProducts(data);
+        // Apply category filter
+        let filteredData = data;
+        if (selectedCategory !== "All") {
+          filteredData = data.filter(product => product.category === selectedCategory);
+        }
+
+        // Apply search filter
+        if (searchTerm) {
+          filteredData = filteredData.filter(product => product.name.toLowerCase().includes(searchTerm.toLowerCase()));
+        }
+
+        // Apply sorting
+        if (sortConfig.key) {
+          filteredData = filteredData.sort((a, b) => {
+            if (a[sortConfig.key] < b[sortConfig.key]) {
+              return sortConfig.direction === "ascending" ? -1 : 1;
+            }
+            if (a[sortConfig.key] > b[sortConfig.key]) {
+              return sortConfig.direction === "ascending" ? 1 : -1;
+            }
+            return 0;
+          });
+        }
+
+        setAllProducts(filteredData);
 
         // Calculate low and out of stock counts
         let lowStock = 0;
         let outOfStock = 0;
-        data.forEach(product => {
+        filteredData.forEach(product => {
           if (product.stock > 0 && product.stock <= 50) {
             lowStock++;
           } else if (product.stock === 0) {
@@ -40,16 +68,6 @@ function Inventory() {
         });
         setLowStockCount(lowStock);
         setOutOfStockCount(outOfStock);
-      })
-      .catch((err) => console.log(err));
-  };
-
-  // Fetching Data of Search Products
-  const fetchSearchData = () => {
-    fetch(`http://localhost:4000/api/product/search?searchTerm=${searchTerm}`)
-      .then((response) => response.json())
-      .then((data) => {
-        setAllProducts(data);
       })
       .catch((err) => console.log(err));
   };
@@ -70,15 +88,12 @@ function Inventory() {
 
   // Modal for Product UPDATE
   const updateProductModalSetting = (selectedProductData) => {
-    console.log("Clicked: edit");
     setUpdateProduct(selectedProductData);
     setShowUpdateModal(!showUpdateModal);
   };
 
   // Delete item
   const deleteItem = (id) => {
-    console.log("Product ID: ", id);
-    console.log(`http://localhost:4000/api/product/delete/${id}`);
     fetch(`http://localhost:4000/api/product/delete/${id}`)
       .then((response) => response.json())
       .then((data) => {
@@ -94,7 +109,20 @@ function Inventory() {
   // Handle Search Term
   const handleSearchTerm = (e) => {
     setSearchTerm(e.target.value);
-    fetchSearchData();
+  };
+
+  // Handle Category Change
+  const handleCategoryChange = (e) => {
+    setSelectedCategory(e.target.value);
+  };
+
+  // Handle Sort
+  const handleSort = (key) => {
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
   };
 
   return (
@@ -126,7 +154,7 @@ function Inventory() {
               <div className="flex gap-8">
                 <div className="flex flex-col">
                   <span className="font-semibold text-gray-600 text-base">
-                    5
+                    4
                   </span>
                   <span className="font-thin text-gray-400 text-xs">
                     Last 7 days
@@ -140,18 +168,18 @@ function Inventory() {
               </span>
               <div className="flex gap-8">
                 <div className="flex flex-col">
-                  <span className="font-semibold text-gray-600 text-base">
+                  <span class='font-semibold text-gray-600 text-base'>
                     {lowStockCount}
                   </span>
-                  <span className="font-thin text-gray-400 text-xs">
+                  <span className='font-thin text-gray-400 text-xs'>
                     Low Stock
                   </span>
                 </div>
-                <div className="flex flex-col">
-                  <span className="font-semibold text-gray-600 text-base">
+                <div className='flex flex-col'>
+                  <span className='font-semibold text-gray-600 text-base'>
                     {outOfStockCount}
                   </span>
-                  <span className="font-thin text-gray-400 text-xs">
+                  <span className='font-thin text-gray-400 text-xs'>
                     Out of Stock
                   </span>
                 </div>
@@ -176,7 +204,7 @@ function Inventory() {
         {/* Table  */}
         <div className="overflow-x-auto rounded-lg border bg-white border-gray-200 ">
           <div className="flex justify-between pt-5 pb-3 px-3">
-            <div className="flex gap-4 justify-center items-center ">
+            <div className="flex gap-4 justify-center items-center">
               <span className="font-bold">Products</span>
               <div className="flex justify-center items-center px-2 border-2 rounded-md ">
                 <img
@@ -192,6 +220,17 @@ function Inventory() {
                   onChange={handleSearchTerm}
                 />
               </div>
+              <select
+                className="border-2 rounded-md text-xs px-2 w-auto"
+                value={selectedCategory}
+                onChange={handleCategoryChange}
+              >
+                {categories.map((category, index) => (
+                  <option key={index} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="flex gap-4">
               <button
@@ -205,20 +244,36 @@ function Inventory() {
           <table className="min-w-full divide-y-2 divide-gray-200 text-sm">
             <thead>
               <tr>
-                <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
+                <th
+                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
+                  onClick={() => handleSort("category")}
+                >
+                  Category
+                  {sortConfig.key === "category" && (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
+                </th>
+                <th
+                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
+                  onClick={() => handleSort("name")}
+                >
                   Product Name
+                  {sortConfig.key === "name" && (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
                 </th>
-                <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
-                  Manufacturer
-                </th>
-                <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
+                <th
+                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
+                  onClick={() => handleSort("stock")}
+                >
                   Stock
+                  {sortConfig.key === "stock" && (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
                 </th>
                 <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
                   Description
                 </th>
-                <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
-                  Availibility
+                <th
+                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
+                  onClick={() => handleSort("availability")}
+                >
+                  Availability
+                  {sortConfig.key === "availability" && (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
                 </th>
                 <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
                   Options
@@ -227,7 +282,7 @@ function Inventory() {
             </thead>
 
             <tbody className="divide-y divide-gray-200">
-              {products.map((element, index) => {
+              {products.map((element) => {
                 let stockStatus = "";
                 let stockClass = "";
 
@@ -244,11 +299,11 @@ function Inventory() {
 
                 return (
                   <tr key={element._id}>
+                    <td className="whitespace-nowrap px-4 py-2 text-gray-900">
+                      {element.category}
+                    </td>
                     <td className="whitespace-nowrap px-4 py-2  text-gray-900">
                       {element.name}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                      {element.manufacturer}
                     </td>
                     <td className="whitespace-nowrap px-4 py-2 text-gray-700">
                       {element.stock}

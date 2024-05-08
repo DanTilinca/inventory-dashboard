@@ -3,6 +3,8 @@ import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import AuthContext from "../AuthContext";
 
+const categories = ["Electronics", "Groceries", "Healthcare", "Others"];
+
 export default function AddProduct({
   addProductModalSetting,
   handlePageUpdate,
@@ -11,10 +13,10 @@ export default function AddProduct({
   const [product, setProduct] = useState({
     userId: authContext.user,
     name: "",
-    manufacturer: "",
+    category: categories[0],
     description: "",
   });
-  console.log("----",product)
+
   const [open, setOpen] = useState(true);
   const cancelButtonRef = useRef(null);
 
@@ -79,10 +81,10 @@ export default function AddProduct({
                         aria-hidden="true"
                       />
                     </div>
-                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left ">
+                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                       <Dialog.Title
                         as="h3"
-                        className="text-lg font-semibold leading-6 text-gray-900 "
+                        className="text-lg font-semibold leading-6 text-gray-900"
                       >
                         Add Product
                       </Dialog.Title>
@@ -109,22 +111,26 @@ export default function AddProduct({
                           </div>
                           <div>
                             <label
-                              htmlFor="manufacturer"
+                              htmlFor="category"
                               className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                             >
-                              Manufacturer
+                              Category
                             </label>
-                            <input
-                              type="text"
-                              name="manufacturer"
-                              id="manufacturer"
-                              value={product.manufacturer}
+                            <select
+                              id="category"
+                              name="category"
+                              value={product.category}
                               onChange={(e) =>
                                 handleInputChange(e.target.name, e.target.value)
                               }
                               className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                              placeholder="Manufacturer Name"
-                            />
+                            >
+                              {categories.map((category, index) => (
+                                <option key={index} value={category}>
+                                  {category}
+                                </option>
+                              ))}
+                            </select>
                           </div>
                           <div className="sm:col-span-2">
                             <label
@@ -143,8 +149,7 @@ export default function AddProduct({
                               onChange={(e) =>
                                 handleInputChange(e.target.name, e.target.value)
                               }
-                            >
-                            </textarea>
+                            ></textarea>
                           </div>
                         </div>
                       </form>

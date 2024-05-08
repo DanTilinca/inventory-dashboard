@@ -5,38 +5,13 @@ import { Doughnut } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
-export const data = {
-  labels: ["Electronics", "Furniture", "Vegetables", "Fruits", "Books", "Cars"],
-  datasets: [
-    {
-      label: "# of Votes",
-      data: [3, 1, 5, 8, 9, 15],
-      backgroundColor: [
-        "rgba(255, 99, 132, 0.2)",
-        "rgba(54, 162, 235, 0.2)",
-        "rgba(255, 206, 86, 0.2)",
-        "rgba(75, 192, 192, 0.2)",
-        "rgba(153, 102, 255, 0.2)",
-        "rgba(255, 159, 64, 0.2)",
-      ],
-      borderColor: [
-        "rgba(255, 99, 132, 1)",
-        "rgba(54, 162, 235, 1)",
-        "rgba(255, 206, 86, 1)",
-        "rgba(75, 192, 192, 1)",
-        "rgba(153, 102, 255, 1)",
-        "rgba(255, 159, 64, 1)",
-      ],
-      borderWidth: 1,
-    },
-  ],
-};
 
 function Dashboard() {
   const [saleAmount, setSaleAmount] = useState("");
   const [purchaseAmount, setPurchaseAmount] = useState("");
   const [stores, setStores] = useState([]);
   const [products, setProducts] = useState([]);
+  const [categoriesData, setCategoriesData] = useState({ labels: [], data: [] });
 
   const [chart, setChart] = useState({
     options: {
@@ -81,6 +56,20 @@ function Dashboard() {
     });
   };
 
+  // Update Doughnut Data
+  const updateDoughnutData = (products) => {
+    const categoryCount = {};
+
+    products.forEach((product) => {
+      categoryCount[product.category] = (categoryCount[product.category] || 0) + 1;
+    });
+
+    setCategoriesData({
+      labels: Object.keys(categoryCount),
+      data: Object.values(categoryCount),
+    });
+  };
+
   const authContext = useContext(AuthContext);
 
   useEffect(() => {
@@ -93,18 +82,14 @@ function Dashboard() {
 
   // Fetching total sales amount
   const fetchTotalSaleAmount = () => {
-    fetch(
-      `http://localhost:4000/api/sales/get/totalsaleamount`
-    )
+    fetch(`http://localhost:4000/api/sales/get/totalsaleamount`)
       .then((response) => response.json())
       .then((datas) => setSaleAmount(datas.totalSaleAmount));
   };
 
   // Fetching total purchase amount
   const fetchTotalPurchaseAmount = () => {
-    fetch(
-      `http://localhost:4000/api/purchase/get/totalpurchaseamount`
-    )
+    fetch(`http://localhost:4000/api/purchase/get/totalpurchaseamount`)
       .then((response) => response.json())
       .then((datas) => setPurchaseAmount(datas.totalPurchaseAmount));
   };
@@ -120,7 +105,10 @@ function Dashboard() {
   const fetchProductsData = () => {
     fetch(`http://localhost:4000/api/product/get`)
       .then((response) => response.json())
-      .then((datas) => setProducts(datas))
+      .then((datas) => {
+        setProducts(datas);
+        updateDoughnutData(datas);
+      })
       .catch((err) => console.log(err));
   };
 
@@ -134,8 +122,8 @@ function Dashboard() {
 
   return (
     <>
-      <div className="grid grid-cols-1 col-span-12 lg:col-span-10 gap-6 md:grid-cols-3 lg:grid-cols-4  p-4 ">
-        <article className="flex flex-col gap-4 rounded-lg border  border-gray-100 bg-white p-6  ">
+      <div className="grid grid-cols-1 col-span-12 lg:col-span-10 gap-6 md:grid-cols-3 lg:grid-cols-4 p-4">
+        <article className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-6">
           <div>
             <strong className="block text-sm font-medium text-gray-500">
               Sales Revenue
@@ -145,12 +133,11 @@ function Dashboard() {
               <span className="text-2xl font-medium text-gray-900">
                 ${saleAmount}
               </span>
-
             </p>
           </div>
         </article>
 
-        <article className="flex flex-col  gap-4 rounded-lg border border-gray-100 bg-white p-6 ">
+        <article className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-6">
           <div>
             <strong className="block text-sm font-medium text-gray-500">
               Purchase Price
@@ -161,11 +148,10 @@ function Dashboard() {
                 {" "}
                 ${purchaseAmount}{" "}
               </span>
-
             </p>
           </div>
         </article>
-        <article className="flex flex-col   gap-4 rounded-lg border border-gray-100 bg-white p-6 ">
+        <article className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-6">
           <div>
             <strong className="block text-sm font-medium text-gray-500">
               Total Products
@@ -179,7 +165,7 @@ function Dashboard() {
             </p>
           </div>
         </article>
-        <article className="flex flex-col   gap-4 rounded-lg border border-gray-100 bg-white p-6 ">
+        <article className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-6">
           <div>
             <strong className="block text-sm font-medium text-gray-500">
               Total Stores
@@ -195,6 +181,9 @@ function Dashboard() {
         </article>
         <div className="flex justify-around bg-white rounded-lg py-8 col-span-full justify-center">
           <div>
+            <strong className="block text-sm font-medium text-gray-500 mb-2">
+              Revenue per Month
+            </strong>
             <Chart
               options={chart.options}
               series={chart.series}
@@ -203,7 +192,37 @@ function Dashboard() {
             />
           </div>
           <div>
-            <Doughnut data={data} />
+            <strong className="block text-sm font-medium text-gray-500 mb-2">
+              Products by Category
+            </strong>
+            <Doughnut
+              data={{
+                labels: categoriesData.labels,
+                datasets: [
+                  {
+                    label: "Number of Products",
+                    data: categoriesData.data,
+                    backgroundColor: [
+                      "rgba(255, 99, 132, 0.2)",
+                      "rgba(54, 162, 235, 0.2)",
+                      "rgba(255, 206, 86, 0.2)",
+                      "rgba(75, 192, 192, 0.2)",
+                      "rgba(153, 102, 255, 0.2)",
+                      "rgba(255, 159, 64, 0.2)",
+                    ],
+                    borderColor: [
+                      "rgba(255, 99, 132, 1)",
+                      "rgba(54, 162, 235, 1)",
+                      "rgba(255, 206, 86, 1)",
+                      "rgba(75, 192, 192, 1)",
+                      "rgba(153, 102, 255, 1)",
+                      "rgba(255, 159, 64, 1)",
+                    ],
+                    borderWidth: 1,
+                  },
+                ],
+              }}
+            />
           </div>
         </div>
       </div>
