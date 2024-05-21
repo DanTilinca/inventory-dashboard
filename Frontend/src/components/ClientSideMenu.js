@@ -29,7 +29,7 @@ function ClientSideMenu() {
           </Link>
 
           <Link
-            to="/map"
+            to="/client/map"
             className="flex items-center gap-2 rounded-lg hover:bg-blue-100 px-3 py-2 text-gray-600 hover:text-blue-800 transition duration-150 ease-in-out"
           >
             <MapIcon />

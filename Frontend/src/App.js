@@ -1,26 +1,26 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
-import "./index.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Layout from "./components/Layout";
-import ClientLayout from "./components/LayoutClient";
 import Inventory from "./pages/Inventory";
-import NoPageFound from "./pages/NoPageFound";
-import AuthContext from "./AuthContext";
-import ProtectedWrapper from "./ProtectedWrapper";
-import { useEffect, useState } from "react";
 import Store from "./pages/Store";
 import Sales from "./pages/Sales";
+import StoresMapPage from "./pages/StoresMap";
 import PurchaseDetails from "./pages/PurchaseDetails";
 import ClientPage from "./pages/Client";
-import StoresMapPage from "./pages/StoresMap";
+import StoresMapClient from "./pages/StoresMapClient";
+import NoPageFound from "./pages/NoPageFound";
+import Layout from "./components/Layout";
+import LayoutClient from "./components/LayoutClient";
+import AuthContext from "./AuthContext";
+import ProtectedWrapper from "./ProtectedWrapper";
+import "./index.css";
 
 const App = () => {
   const [user, setUser] = useState("");
   const [loader, setLoader] = useState(true);
-  let myLoginUser = JSON.parse(localStorage.getItem("user"));
+  const myLoginUser = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     if (myLoginUser) {
@@ -42,9 +42,9 @@ const App = () => {
     localStorage.removeItem("user");
   };
 
-  let value = { user, signin, signout };
+  const value = { user, signin, signout };
 
-  if (loader)
+  if (loader) {
     return (
       <div
         style={{
@@ -57,6 +57,7 @@ const App = () => {
         <h1>LOADING...</h1>
       </div>
     );
+  }
 
   return (
     <AuthContext.Provider value={value}>
@@ -77,17 +78,18 @@ const App = () => {
             <Route path="/purchase-details" element={<PurchaseDetails />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/manage-store" element={<Store />} />
-            <Route path="/stores-map" element={<StoresMapPage />} />
+            <Route path="/stores-map" element={<StoresMapPage />} /> {/* Admin map */}
           </Route>
           <Route
             path="/client"
             element={
               <ProtectedWrapper>
-                <ClientLayout />
+                <LayoutClient />
               </ProtectedWrapper>
             }
           >
             <Route index element={<ClientPage />} />
+            <Route path="map" element={<StoresMapClient />} /> {/* Corrected path */}
           </Route>
           <Route path="*" element={<NoPageFound />} />
         </Routes>
