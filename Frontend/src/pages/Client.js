@@ -1,8 +1,10 @@
 import React, { useContext, useEffect, useState } from "react";
 import AuthContext from "../AuthContext";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+import { Doughnut } from "react-chartjs-2";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
+
 export const data = {
   labels: ["Electronics", "Furniture", "Vegetables", "Fruits", "Books", "Cars"],
   datasets: [
@@ -31,10 +33,14 @@ export const data = {
 };
 
 function Client() {
-  
-
   const authContext = useContext(AuthContext);
 
+  return (
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4">Client Dashboard</h1>
+      <Doughnut data={data} />
+    </div>
+  );
 }
 
 export default Client;
