@@ -1,4 +1,8 @@
 import React, { useState, useEffect, useContext } from "react";
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
+import 'ag-grid-enterprise';
 import AddSale from "../components/AddSale";
 import AuthContext from "../AuthContext";
 
@@ -8,43 +12,24 @@ function Sales() {
   const [products, setAllProducts] = useState([]);
   const [stores, setAllStores] = useState([]);
   const [updatePage, setUpdatePage] = useState(true);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "ascending" });
-
+  const [searchText, setSearchText] = useState("");
+  const [pageSize, setPageSize] = useState(20);
   const authContext = useContext(AuthContext);
 
   useEffect(() => {
     fetchSalesData();
     fetchProductsData();
     fetchStoresData();
-  }, [updatePage, sortConfig]);
+  }, [updatePage]);
 
   // Fetching Data of All Sales
   const fetchSalesData = () => {
     fetch(`http://localhost:4000/api/sales/get`)
       .then((response) => response.json())
       .then((data) => {
-        // Apply sorting
-        if (sortConfig.key) {
-          data = data.sort((a, b) => {
-            const aValue = getElementValue(a, sortConfig.key);
-            const bValue = getElementValue(b, sortConfig.key);
-            if (aValue < bValue) {
-              return sortConfig.direction === "ascending" ? -1 : 1;
-            }
-            if (aValue > bValue) {
-              return sortConfig.direction === "ascending" ? 1 : -1;
-            }
-            return 0;
-          });
-        }
         setAllSalesData(data);
       })
       .catch((err) => console.log(err));
-  };
-
-  // Helper function to retrieve the nested value
-  const getElementValue = (element, key) => {
-    return key.split('.').reduce((obj, keyPart) => obj && obj[keyPart], element);
   };
 
   // Fetching Data of All Products
@@ -76,17 +61,37 @@ function Sales() {
     setUpdatePage(!updatePage);
   };
 
-  // Handle Sort
-  const handleSort = (key) => {
-    let direction = "ascending";
-    if (sortConfig.key === key && sortConfig.direction === "ascending") {
-      direction = "descending";
-    }
-    setSortConfig({ key, direction });
+  const handleSearch = (event) => {
+    setSearchText(event.target.value);
   };
 
+  const columns = [
+    { headerName: "Product Name", field: "ProductID.name", sortable: true, filter: true },
+    { headerName: "Category", field: "ProductID.category", sortable: true, filter: true },
+    { headerName: "Store Name", field: "StoreID.name", sortable: true, filter: true },
+    { headerName: "Stock Sold", field: "StockSold", sortable: true, filter: 'agNumberColumnFilter' },
+    { headerName: "Sales Date", field: "SaleDate", sortable: true, filter: 'agDateColumnFilter', valueFormatter: params => new Date(params.value).toLocaleDateString() },
+    { headerName: "Total Sale Amount", field: "TotalSaleAmount", sortable: true, filter: 'agNumberColumnFilter' },
+    { headerName: "Price per Unit", field: "pricePerUnit", valueGetter: params => {
+        if (params.data.TotalSaleAmount && params.data.StockSold) {
+          return (params.data.TotalSaleAmount / params.data.StockSold).toFixed(2);
+        }
+        return null;
+      }, sortable: true, filter: 'agNumberColumnFilter' }
+  ];
+
+  const defaultColDef = {
+    sortable: true,
+    filter: true,
+    resizable: true,
+    flex: 1,
+    minWidth: 100
+  };
+
+  const filteredData = sales.filter(item => item.ProductID?.name?.toLowerCase().includes(searchText.toLowerCase()));
+
   return (
-    <div className="col-span-12 lg:col-span-10  flex justify-center">
+    <div className="col-span-12 lg:col-span-10 flex justify-center">
       <div className="flex flex-col gap-5 w-11/12">
         {showSaleModal && (
           <AddSale
@@ -97,91 +102,42 @@ function Sales() {
             authContext={authContext}
           />
         )}
-        {/* Table */}
-        <div className="overflow-x-auto rounded-lg border bg-white border-gray-200">
-          <div className="flex justify-between pt-5 pb-3 px-3">
-            <div className="flex gap-4 justify-center items-center">
-              <span className="font-bold">Sales</span>
+        <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 150px)', width: '100%' }}>
+          <div className="flex flex-col pt-5 pb-3 px-3 bg-white shadow rounded-lg">
+            <div className="flex justify-center items-center mb-4">
+              <span className="font-bold text-3xl"> Sales</span>
             </div>
-            <div className="flex gap-4">
+            <div className="flex justify-between items-center">
+              <input
+                type="text"
+                placeholder="Search by Product Name"
+                value={searchText}
+                onChange={handleSearch}
+                className="border p-2 rounded text-sm"
+              />
               <button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold p-2 text-xs rounded"
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
                 onClick={addSaleModalSetting}
               >
-                Add Sales
+                Add Sale
               </button>
             </div>
           </div>
-          <table className="min-w-full divide-y-2 divide-gray-200 text-sm">
-            <thead>
-              <tr>
-                <th
-                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
-                  onClick={() => handleSort("ProductID.name")}
-                >
-                  Product Name
-                  {sortConfig.key === "ProductID.name" &&
-                    (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
-                </th>
-                <th
-                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
-                  onClick={() => handleSort("StoreID.name")}
-                >
-                  Store Name
-                  {sortConfig.key === "StoreID.name" &&
-                    (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
-                </th>
-                <th
-                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
-                  onClick={() => handleSort("StockSold")}
-                >
-                  Stock Sold
-                  {sortConfig.key === "StockSold" &&
-                    (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
-                </th>
-                <th
-                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
-                  onClick={() => handleSort("SaleDate")}
-                >
-                  Sales Date
-                  {sortConfig.key === "SaleDate" &&
-                    (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
-                </th>
-                <th
-                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
-                  onClick={() => handleSort("TotalSaleAmount")}
-                >
-                  Total Sale Amount
-                  {sortConfig.key === "TotalSaleAmount" &&
-                    (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
-                </th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-gray-200">
-              {sales.map((element) => {
-                return (
-                  <tr key={element._id}>
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-900">
-                      {element.ProductID?.name}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                      {element.StoreID?.name}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                      {element.StockSold}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                      {element.SaleDate}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                      ${element.TotalSaleAmount}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <AgGridReact
+            rowData={filteredData}
+            columnDefs={columns}
+            defaultColDef={defaultColDef}
+            pagination={true}
+            paginationPageSize={pageSize}
+            rowSelection="multiple"
+            enableRangeSelection={true}
+            enableCharts={true}
+            domLayout="autoHeight"
+            onGridReady={(params) => {
+              params.api.sizeColumnsToFit();
+              params.api.paginationSetPageSize(pageSize);
+            }}
+          />
         </div>
       </div>
     </div>

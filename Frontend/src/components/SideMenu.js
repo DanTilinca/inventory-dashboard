@@ -7,6 +7,7 @@ import ReceiptIcon from '@mui/icons-material/Receipt';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import StoreIcon from '@mui/icons-material/Store';
 import MapIcon from '@mui/icons-material/Map';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 
 function SideMenu() {
   const localStorageData = JSON.parse(localStorage.getItem("user"));
@@ -32,6 +33,14 @@ function SideMenu() {
             </summary>
           </details>
 
+          <Link
+            to="/statistics"
+            className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-600 hover:bg-blue-100 hover:text-blue-800 transition duration-150 ease-in-out"
+          >
+            <AssessmentIcon />
+            <span className="text-base font-semibold">Statistics</span>
+          </Link>
+          
           <Link
             to="/purchase-details"
             className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-600 hover:bg-blue-100 hover:text-blue-800 transition duration-150 ease-in-out"
