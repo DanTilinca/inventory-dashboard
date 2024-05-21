@@ -1,4 +1,8 @@
 import React, { useState, useEffect, useContext } from "react";
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
+import 'ag-grid-enterprise';
 import AddPurchaseDetails from "../components/AddPurchaseDetails";
 import AuthContext from "../AuthContext";
 
@@ -7,32 +11,20 @@ function PurchaseDetails() {
   const [purchase, setAllPurchaseData] = useState([]);
   const [products, setAllProducts] = useState([]);
   const [updatePage, setUpdatePage] = useState(true);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "ascending" });
-
+  const [searchText, setSearchText] = useState("");
+  const [pageSize, setPageSize] = useState(20);
   const authContext = useContext(AuthContext);
 
   useEffect(() => {
     fetchPurchaseData();
     fetchProductsData();
-  }, [updatePage, sortConfig]);
+  }, [updatePage]);
 
   // Fetching Data of All Purchase items
   const fetchPurchaseData = () => {
     fetch(`http://localhost:4000/api/purchase/get`)
       .then((response) => response.json())
       .then((data) => {
-        // Apply sorting
-        if (sortConfig.key) {
-          data = data.sort((a, b) => {
-            if (a[sortConfig.key] < b[sortConfig.key]) {
-              return sortConfig.direction === "ascending" ? -1 : 1;
-            }
-            if (a[sortConfig.key] > b[sortConfig.key]) {
-              return sortConfig.direction === "ascending" ? 1 : -1;
-            }
-            return 0;
-          });
-        }
         setAllPurchaseData(data);
       })
       .catch((err) => console.log(err));
@@ -58,18 +50,37 @@ function PurchaseDetails() {
     setUpdatePage(!updatePage);
   };
 
-  // Handle Sort
-  const handleSort = (key) => {
-    let direction = "ascending";
-    if (sortConfig.key === key && sortConfig.direction === "ascending") {
-      direction = "descending";
-    }
-    setSortConfig({ key, direction });
+  const handleSearch = (event) => {
+    setSearchText(event.target.value);
   };
 
+  const columns = [
+    { headerName: "Product Name", field: "ProductID.name", sortable: true, filter: true },
+    { headerName: "Category", field: "ProductID.category", sortable: true, filter: true },
+    { headerName: "Quantity Purchased", field: "QuantityPurchased", sortable: true, filter: 'agNumberColumnFilter' },
+    { headerName: "Purchase Date", field: "PurchaseDate", sortable: true, filter: 'agDateColumnFilter', valueFormatter: params => new Date(params.value).toLocaleDateString() },
+    { headerName: "Total Purchase Amount", field: "TotalPurchaseAmount", sortable: true, filter: 'agNumberColumnFilter' },
+    { headerName: "Price per Unit", field: "pricePerUnit", valueGetter: params => {
+        if (params.data.TotalPurchaseAmount && params.data.QuantityPurchased) {
+          return (params.data.TotalPurchaseAmount / params.data.QuantityPurchased).toFixed(2);
+        }
+        return null;
+      }, sortable: true, filter: 'agNumberColumnFilter' }
+  ];
+
+  const defaultColDef = {
+    sortable: true,
+    filter: true,
+    resizable: true,
+    flex: 1,
+    minWidth: 100
+  };
+
+  const filteredData = purchase.filter(item => item.ProductID?.name?.toLowerCase().includes(searchText.toLowerCase()));
+
   return (
-    <div className="col-span-12 lg:col-span-10  flex justify-center">
-      <div className=" flex flex-col gap-5 w-11/12">
+    <div className="col-span-12 lg:col-span-10 flex justify-center">
+      <div className="flex flex-col gap-5 w-11/12">
         {showPurchaseModal && (
           <AddPurchaseDetails
             addSaleModalSetting={addSaleModalSetting}
@@ -78,83 +89,42 @@ function PurchaseDetails() {
             authContext={authContext}
           />
         )}
-        {/* Table */}
-        <div className="overflow-x-auto rounded-lg border bg-white border-gray-200 ">
-          <div className="flex justify-between pt-5 pb-3 px-3">
-            <div className="flex gap-4 justify-center items-center ">
-              <span className="font-bold">Purchases</span>
+        <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 150px)', width: '100%' }}>
+          <div className="flex flex-col pt-5 pb-3 px-3 bg-white shadow rounded-lg">
+            <div className="flex justify-center items-center mb-4">
+              <span className="font-bold text-3xl">Purchases</span>
             </div>
-            <div className="flex gap-4">
+            <div className="flex justify-between items-center">
+              <input
+                type="text"
+                placeholder="Search by Product Name"
+                value={searchText}
+                onChange={handleSearch}
+                className="border p-2 rounded text-sm"
+              />
               <button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold p-2 text-xs  rounded"
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
                 onClick={addSaleModalSetting}
               >
                 Add Purchase
               </button>
             </div>
           </div>
-          <table className="min-w-full divide-y-2 divide-gray-200 text-sm">
-            <thead>
-              <tr>
-                <th
-                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
-                  onClick={() => handleSort("ProductID.name")}
-                >
-                  Product Name
-                  {sortConfig.key === "ProductID.name" &&
-                    (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
-                </th>
-                <th
-                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
-                  onClick={() => handleSort("QuantityPurchased")}
-                >
-                  Quantity Purchased
-                  {sortConfig.key === "QuantityPurchased" &&
-                    (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
-                </th>
-                <th
-                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
-                  onClick={() => handleSort("PurchaseDate")}
-                >
-                  Purchase Date
-                  {sortConfig.key === "PurchaseDate" &&
-                    (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
-                </th>
-                <th
-                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
-                  onClick={() => handleSort("TotalPurchaseAmount")}
-                >
-                  Total Purchase Amount
-                  {sortConfig.key === "TotalPurchaseAmount" &&
-                    (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
-                </th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-gray-200">
-              {purchase.map((element) => {
-                return (
-                  <tr key={element._id}>
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-900">
-                      {element.ProductID?.name}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                      {element.QuantityPurchased}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                      {new Date(element.PurchaseDate).toLocaleDateString() ==
-                      new Date().toLocaleDateString()
-                        ? "Today"
-                        : element.PurchaseDate}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                      ${element.TotalPurchaseAmount}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <AgGridReact
+            rowData={filteredData}
+            columnDefs={columns}
+            defaultColDef={defaultColDef}
+            pagination={true}
+            paginationPageSize={pageSize}
+            rowSelection="multiple"
+            enableRangeSelection={true}
+            enableCharts={true}
+            domLayout="autoHeight"
+            onGridReady={(params) => {
+              params.api.sizeColumnsToFit();
+              params.api.paginationSetPageSize(pageSize);
+            }}
+          />
         </div>
       </div>
     </div>
