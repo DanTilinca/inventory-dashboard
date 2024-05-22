@@ -1,39 +1,64 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-import SearchIcon from '@mui/icons-material/Search';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import HomeIcon from '@mui/icons-material/Home';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import ReceiptIcon from '@mui/icons-material/Receipt';
+import StoreIcon from '@mui/icons-material/Store';
 import MapIcon from '@mui/icons-material/Map';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 
 function ClientSideMenu() {
-  const localStorageData = JSON.parse(localStorage.getItem("user"));
-
   return (
-    <div className="fixed top-0 left-0 h-full bg-gray-50 text-gray-700 w-1/6 flex flex-col justify-between lg:block z-50">
-      <div className="px-4 py-6">
-        <nav aria-label="Main Nav" className="mt-4 flex flex-col space-y-2">
+    <div className="h-full flex flex-col justify-between bg-gray-50 text-gray-700 hidden lg:flex">
+      <div className="px-6 py-8">
+        <nav aria-label="Main Nav" className="mt-6 flex flex-col space-y-2">
           <Link
-            to="/"
-            className="flex items-center gap-2 rounded-lg hover:bg-blue-100 px-3 py-2 text-gray-600 hover:text-blue-800 transition duration-150 ease-in-out"
+            to="/client"
+            className="flex items-center gap-3 rounded-lg hover:bg-blue-100 px-4 py-3 text-gray-600 hover:text-blue-800 transition duration-150 ease-in-out"
           >
-            <SearchIcon />
-            <span className="text-lg font-semibold">Search Product</span>
+            <HomeIcon />
+            <span className="text-base font-semibold">Home</span>
           </Link>
 
           <Link
-            to="/money-spent"
-            className="flex items-center gap-2 rounded-lg hover:bg-blue-100 px-3 py-2 text-gray-600 hover:text-blue-800 transition duration-150 ease-in-out"
+            to="/client/products"
+            className="flex items-center gap-3 rounded-lg hover:bg-blue-100 px-4 py-3 text-gray-600 hover:text-blue-800 transition duration-150 ease-in-out"
           >
-            <AttachMoneyIcon />
-            <span className="text-lg font-semibold">Money Spent</span>
+            <InventoryIcon />
+            <span className="text-base font-semibold">Products</span>
+          </Link>
+
+          <Link
+            to="/client/orders"
+            className="flex items-center gap-3 rounded-lg hover:bg-blue-100 px-4 py-3 text-gray-600 hover:text-blue-800 transition duration-150 ease-in-out"
+          >
+            <ReceiptIcon />
+            <span className="text-base font-semibold">Orders</span>
+          </Link>
+
+          <Link
+            to="/client/stores"
+            className="flex items-center gap-3 rounded-lg hover:bg-blue-100 px-4 py-3 text-gray-600 hover:text-blue-800 transition duration-150 ease-in-out"
+          >
+            <StoreIcon />
+            <span className="text-base font-semibold">Stores</span>
           </Link>
 
           <Link
             to="/client/map"
-            className="flex items-center gap-2 rounded-lg hover:bg-blue-100 px-3 py-2 text-gray-600 hover:text-blue-800 transition duration-150 ease-in-out"
+            className="flex items-center gap-3 rounded-lg hover:bg-blue-100 px-4 py-3 text-gray-600 hover:text-blue-800 transition duration-150 ease-in-out"
           >
             <MapIcon />
-            <span className="text-lg font-semibold">Map</span>
+            <span className="text-base font-semibold">Map</span>
+          </Link>
+
+          <Link
+            to="/client/reports"
+            className="flex items-center gap-3 rounded-lg hover:bg-blue-100 px-4 py-3 text-gray-600 hover:text-blue-800 transition duration-150 ease-in-out"
+          >
+            <AssessmentIcon />
+            <span className="text-base font-semibold">Reports</span>
           </Link>
         </nav>
       </div>

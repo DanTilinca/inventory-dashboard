@@ -13,9 +13,7 @@ function LayoutClient() {
         <div className="col-span-2 h-screen sticky top-0 hidden lg:flex">
           <ClientSideMenu />
         </div>
-        <div className="col-span-10 p-4">
-          <Outlet />
-        </div>
+        <Outlet />
       </div>
     </>
   );

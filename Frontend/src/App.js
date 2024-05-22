@@ -8,7 +8,7 @@ import Store from "./pages/Store";
 import Sales from "./pages/Sales";
 import StoresMapPage from "./pages/StoresMap";
 import PurchaseDetails from "./pages/PurchaseDetails";
-import ClientPage from "./pages/Client";
+import HomePageClient from "./pages/HomePageClient";
 import StoresMapClient from "./pages/StoresMapClient";
 import NoPageFound from "./pages/NoPageFound";
 import Layout from "./components/Layout";
@@ -78,7 +78,7 @@ const App = () => {
             <Route path="/purchase-details" element={<PurchaseDetails />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/manage-store" element={<Store />} />
-            <Route path="/stores-map" element={<StoresMapPage />} /> {/* Admin map */}
+            <Route path="/stores-map" element={<StoresMapPage />} />
           </Route>
           <Route
             path="/client"
@@ -88,8 +88,8 @@ const App = () => {
               </ProtectedWrapper>
             }
           >
-            <Route index element={<ClientPage />} />
-            <Route path="map" element={<StoresMapClient />} /> {/* Corrected path */}
+            <Route index element={<HomePageClient />} />
+            <Route path="map" element={<StoresMapClient />} />
           </Route>
           <Route path="*" element={<NoPageFound />} />
         </Routes>
