@@ -22,10 +22,14 @@ const SaleSchema = new mongoose.Schema(
       required: true,
     },
     SaleDate: {
-      type: String,
+      type: Date,
       required: true,
     },
     TotalSaleAmount: {
+      type: Number,
+      required: true,
+    },
+    PricePerUnit: {
       type: Number,
       required: true,
     },

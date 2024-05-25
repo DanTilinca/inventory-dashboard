@@ -9,6 +9,8 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 function Dashboard() {
   const [saleAmount, setSaleAmount] = useState("");
   const [purchaseAmount, setPurchaseAmount] = useState("");
+  const [salesCount, setSalesCount] = useState(0);
+  const [purchaseCount, setPurchaseCount] = useState(0);
   const [stores, setStores] = useState([]);
   const [products, setProducts] = useState([]);
   const [categoriesData, setCategoriesData] = useState({ labels: [], data: [] });
@@ -19,29 +21,29 @@ function Dashboard() {
         id: "basic-bar",
       },
       xaxis: {
-        categories: [
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec",
-        ],
+        categories: getLast12Months(), // Dynamic categories based on the current month
       },
     },
     series: [
       {
-        name: "series",
-        data: [10, 20, 40, 50, 60, 20, 10, 35, 45, 70, 25, 70],
+        name: "Monthly Sales Amount",
+        data: [],
       },
     ],
   });
+
+  // Function to get the last 12 months as an array of month names
+  function getLast12Months() {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const currentMonth = new Date().getMonth();
+    const last12Months = [];
+
+    for (let i = 0; i < 12; i++) {
+      last12Months.unshift(months[(currentMonth - i + 12) % 12]);
+    }
+
+    return last12Months;
+  }
 
   // Update Chart Data
   const updateChartData = (salesData) => {
@@ -73,25 +75,41 @@ function Dashboard() {
   const authContext = useContext(AuthContext);
 
   useEffect(() => {
-    fetchTotalSaleAmount();
-    fetchTotalPurchaseAmount();
+    fetchTotalSaleAmountLast30Days();
+    fetchTotalPurchaseAmountLast30Days();
+    fetchSalesCountLast30Days();
+    fetchPurchaseCountLast30Days();
     fetchStoresData();
     fetchProductsData();
     fetchMonthlySalesData();
   }, []);
 
-  // Fetching total sales amount
-  const fetchTotalSaleAmount = () => {
-    fetch(`http://localhost:4000/api/sales/get/totalsaleamount`)
+  // Fetching total sales amount in the last 30 days
+  const fetchTotalSaleAmountLast30Days = () => {
+    fetch(`http://localhost:4000/api/sales/get/totalsaleamountlast30days`)
       .then((response) => response.json())
       .then((datas) => setSaleAmount(datas.totalSaleAmount));
   };
 
-  // Fetching total purchase amount
-  const fetchTotalPurchaseAmount = () => {
-    fetch(`http://localhost:4000/api/purchase/get/totalpurchaseamount`)
+  // Fetching total purchase amount in the last 30 days
+  const fetchTotalPurchaseAmountLast30Days = () => {
+    fetch(`http://localhost:4000/api/purchase/get/totalpurchaseamountlast30days`)
       .then((response) => response.json())
       .then((datas) => setPurchaseAmount(datas.totalPurchaseAmount));
+  };
+
+  // Fetching number of sales in the last 30 days
+  const fetchSalesCountLast30Days = () => {
+    fetch(`http://localhost:4000/api/sales/get/salescountlast30days`)
+      .then((response) => response.json())
+      .then((datas) => setSalesCount(datas.salesCount));
+  };
+
+  // Fetching number of purchases in the last 30 days
+  const fetchPurchaseCountLast30Days = () => {
+    fetch(`http://localhost:4000/api/purchase/get/purchasecountlast30days`)
+      .then((response) => response.json())
+      .then((datas) => setPurchaseCount(datas.purchaseCount));
   };
 
   // Fetching all stores data
@@ -123,15 +141,39 @@ function Dashboard() {
   return (
     <>
       <div className="grid grid-cols-1 col-span-12 lg:col-span-10 gap-6 md:grid-cols-3 lg:grid-cols-4 p-4">
+        {/* Sales Section */}
         <article className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-6">
           <div>
             <strong className="block text-sm font-medium text-gray-500">
-              Sales Revenue
+              Sales (Last 30 Days)
             </strong>
-
             <p>
-              <span className="text-2xl font-medium text-gray-900">
-                ${saleAmount}
+              <span className="text-xl font-medium text-gray-900">
+                Revenue: ${saleAmount}
+              </span>
+            </p>
+            <p>
+              <span className="text-xl font-medium text-gray-900">
+                Count: {salesCount}
+              </span>
+            </p>
+          </div>
+        </article>
+
+        {/* Purchases Section */}
+        <article className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-6">
+          <div>
+            <strong className="block text-sm font-medium text-gray-500">
+              Purchases (Last 30 Days)
+            </strong>
+            <p>
+              <span className="text-xl font-medium text-gray-900">
+                Amount: ${purchaseAmount}
+              </span>
+            </p>
+            <p>
+              <span className="text-xl font-medium text-gray-900">
+                Count: {purchaseCount}
               </span>
             </p>
           </div>
@@ -140,49 +182,33 @@ function Dashboard() {
         <article className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-6">
           <div>
             <strong className="block text-sm font-medium text-gray-500">
-              Purchase Price
+              Products in Inventory
             </strong>
-
             <p>
               <span className="text-2xl font-medium text-gray-900">
-                {" "}
-                ${purchaseAmount}{" "}
+                {products.length}
               </span>
             </p>
           </div>
         </article>
-        <article className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-6">
-          <div>
-            <strong className="block text-sm font-medium text-gray-500">
-              Total Products
-            </strong>
 
-            <p>
-              <span className="text-2xl font-medium text-gray-900">
-                {" "}
-                {products.length}{" "}
-              </span>
-            </p>
-          </div>
-        </article>
         <article className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-6">
           <div>
             <strong className="block text-sm font-medium text-gray-500">
               Total Stores
             </strong>
-
             <p>
               <span className="text-2xl font-medium text-gray-900">
-                {" "}
-                {stores.length}{" "}
+                {stores.length}
               </span>
             </p>
           </div>
         </article>
+
         <div className="flex justify-around bg-white rounded-lg py-8 col-span-full justify-center">
           <div>
             <strong className="block text-sm font-medium text-gray-500 mb-2">
-              Revenue per Month
+              Revenue per Month (Last 12 Months)
             </strong>
             <Chart
               options={chart.options}

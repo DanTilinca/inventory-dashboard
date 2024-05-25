@@ -16,7 +16,7 @@ const ProfilePicture = ({ imageUrl, firstName, lastName }) => {
   if (imageUrl) {
     return <img className="h-8 w-8 rounded-full" src={imageUrl} alt="profile" />;
   }
-  const initial = lastName ? lastName.charAt(0) : '';
+  const initial = firstName ? firstName.charAt(0) : '';
   return (
     <div className="flex justify-center items-center h-8 w-8 rounded-full bg-gray-500">
       <span className="text-white font-medium">{initial.toUpperCase()}</span>

@@ -7,8 +7,9 @@ const addPurchase = (req, res) => {
     userID: req.body.userID,
     ProductID: req.body.productID,
     QuantityPurchased: req.body.quantityPurchased,
-    PurchaseDate: req.body.purchaseDate,
+    PurchaseDate: new Date(req.body.purchaseDate),
     TotalPurchaseAmount: req.body.totalPurchaseAmount,
+    PricePerUnit: req.body.pricePerUnit,
   });
 
   addPurchaseDetails
@@ -40,4 +41,38 @@ const getTotalPurchaseAmount = async (req, res) => {
   res.json({ totalPurchaseAmount });
 };
 
-module.exports = { addPurchase, getPurchaseData, getTotalPurchaseAmount };
+// Get total purchase amount in the last 30 days
+const getTotalPurchaseAmountLast30Days = async (req, res) => {
+  const date30DaysAgo = new Date();
+  date30DaysAgo.setDate(date30DaysAgo.getDate() - 30);
+
+  const purchaseData = await Purchase.find({
+    PurchaseDate: { $gte: date30DaysAgo },
+  });
+
+  let totalPurchaseAmount = 0;
+  purchaseData.forEach((purchase) => {
+    totalPurchaseAmount += purchase.TotalPurchaseAmount;
+  });
+
+  res.json({ totalPurchaseAmount });
+};
+
+// Get number of purchases in the last 30 days
+const getPurchaseCountLast30Days = async (req, res) => {
+  try {
+    const date30DaysAgo = new Date();
+    date30DaysAgo.setDate(date30DaysAgo.getDate() - 30);
+
+    const purchaseCount = await Purchase.countDocuments({
+      PurchaseDate: { $gte: date30DaysAgo },
+    });
+
+    res.status(200).json({ purchaseCount });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+module.exports = { addPurchase, getPurchaseData, getTotalPurchaseAmount, getTotalPurchaseAmountLast30Days, getPurchaseCountLast30Days };

@@ -2,6 +2,7 @@ import { Fragment, useRef, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import ExclamationIcon from '@mui/icons-material/PriorityHighOutlined';
 import PlusIcon from '@mui/icons-material/AddOutlined';
+import Select from "react-select";
 
 export default function AddSale({
   addSaleModalSetting,
@@ -17,6 +18,7 @@ export default function AddSale({
     stockSold: "",
     saleDate: "",
     totalSaleAmount: "",
+    pricePerUnit: "",
   });
   const [open, setOpen] = useState(true);
   const [error, setError] = useState(false);
@@ -27,21 +29,39 @@ export default function AddSale({
 
   // Handling Input Change for input fields
   const handleInputChange = (key, value) => {
-    setSale({ ...sale, [key]: value });
+    setSale((prevSale) => {
+      const updatedSale = { ...prevSale, [key]: value };
 
-    if (key === "productID") {
-      const selectedProduct = products.find(product => product._id === value);
-      setMaxStock(selectedProduct ? selectedProduct.stock : 0);
-      setStockText(selectedProduct ? <span className="text-md font-bold">Stock: {selectedProduct.stock}</span> : "");
-    }
+      if (key === "productID") {
+        const selectedProduct = products.find(product => product._id === value);
+        setMaxStock(selectedProduct ? selectedProduct.stock : 0);
+        setStockText(selectedProduct ? <span className="text-md font-bold">Stock: {selectedProduct.stock}</span> : "");
+      }
 
-    if (key === "stockSold" && value > maxStock) {
-      setError(true);
-      setErrorMessage(`Cannot sell more than ${maxStock} units.`);
-    } else {
-      setError(false);
-      setErrorMessage("");
-    }
+      if (key === "stockSold" && value > maxStock) {
+        setError(true);
+        setErrorMessage(`Cannot sell more than ${maxStock} units.`);
+      } else {
+        setError(false);
+        setErrorMessage("");
+      }
+
+      if (key === "stockSold" || key === "totalSaleAmount") {
+        const stockSold = parseFloat(updatedSale.stockSold);
+        const totalAmount = parseFloat(updatedSale.totalSaleAmount);
+        if (stockSold && totalAmount) {
+          updatedSale.pricePerUnit = (totalAmount / stockSold).toFixed(2);
+        }
+      } else if (key === "pricePerUnit") {
+        const stockSold = parseFloat(updatedSale.stockSold);
+        const pricePerUnit = parseFloat(updatedSale.pricePerUnit);
+        if (stockSold && pricePerUnit) {
+          updatedSale.totalSaleAmount = (stockSold * pricePerUnit).toFixed(2);
+        }
+      }
+
+      return updatedSale;
+    });
   };
 
   // Validate if all fields are filled
@@ -64,12 +84,17 @@ export default function AddSale({
       return;
     }
 
+    const saleData = {
+      ...sale,
+      saleDate: new Date(sale.saleDate), // Convert date string to Date object
+    };
+
     fetch("http://localhost:4000/api/sales/add", {
       method: "POST",
       headers: {
         "Content-type": "application/json",
       },
-      body: JSON.stringify(sale),
+      body: JSON.stringify(saleData),
     })
       .then((result) => {
         alert("Sale ADDED");
@@ -80,7 +105,6 @@ export default function AddSale({
   };
 
   return (
-    // Modal
     <Transition.Root show={open} as={Fragment}>
       <Dialog
         as="div"
@@ -101,7 +125,7 @@ export default function AddSale({
         </Transition.Child>
 
         <div className="fixed inset-0 z-10 overflow-y-auto">
-          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0 ">
+          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -111,59 +135,39 @@ export default function AddSale({
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg overflow-y-scroll">
+              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
                 <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                   <div className="sm:flex sm:items-start">
                     <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
-                      <PlusIcon
-                        className="h-6 w-6 text-blue-400"
-                        aria-hidden="true"
-                      />
+                      <PlusIcon className="h-6 w-6 text-blue-400" aria-hidden="true" />
                     </div>
-                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left ">
-                      <Dialog.Title
-                        as="h3"
-                        className="text-lg  py-4 font-semibold leading-6 text-gray-900 "
-                      >
+                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                      <Dialog.Title as="h3" className="text-lg py-4 font-semibold leading-6 text-gray-900">
                         Add Sale
                       </Dialog.Title>
                       <form action="#">
                         <div className="grid gap-4 mb-4 sm:grid-cols-2">
                           <div>
-                            <label
-                              htmlFor="productID"
-                              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                            >
+                            <label htmlFor="productID" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                               Product Name
                             </label>
-                            <select
+                            <Select
                               id="productID"
-                              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                               name="productID"
-                              onChange={(e) =>
-                                handleInputChange(e.target.name, e.target.value)
-                              }
-                            >
-                              <option value="">Select Product</option>
-                              {products.map((element, index) => {
-                                return (
-                                  <option key={element._id} value={element._id}>
-                                    {element.name}
-                                  </option>
-                                );
-                              })}
-                            </select>
-                            {stockText && (
-                              <p className="text-sm text-gray-600 mt-2">
-                                {stockText}
-                              </p>
-                            )}
+                              options={products.map(product => ({
+                                value: product._id,
+                                label: product.name,
+                              }))}
+                              onChange={(option) => handleInputChange("productID", option.value)}
+                              className="basic-single"
+                              classNamePrefix="select"
+                              isSearchable
+                              placeholder="Select Product"
+                            />
+                            {stockText && <p className="text-sm text-gray-600 mt-2">{stockText}</p>}
                           </div>
                           <div>
-                            <label
-                              htmlFor="stockSold"
-                              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                            >
+                            <label htmlFor="stockSold" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                               Stock Sold
                             </label>
                             <input
@@ -171,63 +175,59 @@ export default function AddSale({
                               name="stockSold"
                               id="stockSold"
                               value={sale.stockSold}
-                              onChange={(e) =>
-                                handleInputChange(e.target.name, e.target.value)
-                              }
+                              onChange={(e) => handleInputChange(e.target.name, e.target.value)}
                               className={`bg-gray-50 border ${error ? "border-red-500" : "border-gray-300"} text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500`}
                               placeholder="Quantity Sold"
                             />
                           </div>
-
                           <div>
-                            <label
-                              htmlFor="storeID"
-                              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                            >
+                            <label htmlFor="pricePerUnit" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                              Price per Unit
+                            </label>
+                            <input
+                              type="number"
+                              name="pricePerUnit"
+                              id="pricePerUnit"
+                              value={sale.pricePerUnit}
+                              onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                              placeholder="Price per Unit"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="totalSaleAmount" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                              Total Sale Amount
+                            </label>
+                            <input
+                              type="number"
+                              name="totalSaleAmount"
+                              id="totalSaleAmount"
+                              value={sale.totalSaleAmount}
+                              onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                              placeholder="Total Sale Amount"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="storeID" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                               Store Name
                             </label>
                             <select
                               id="storeID"
                               className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                               name="storeID"
-                              onChange={(e) =>
-                                handleInputChange(e.target.name, e.target.value)
-                              }
+                              onChange={(e) => handleInputChange(e.target.name, e.target.value)}
                             >
                               <option value="">Select Store</option>
-                              {stores.map((element, index) => {
-                                return (
-                                  <option key={element._id} value={element._id}>
-                                    {element.name}
-                                  </option>
-                                );
-                              })}
+                              {stores.map((element) => (
+                                <option key={element._id} value={element._id}>
+                                  {element.name}
+                                </option>
+                              ))}
                             </select>
                           </div>
-                          <div>
-                            <label
-                              htmlFor="totalSaleAmount"
-                              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                            >
-                              Total Sale Amount
-                            </label>
-                            <input
-                              type="number"
-                              name="totalSaleAmount"
-                              id="price"
-                              value={sale.totalSaleAmount}
-                              onChange={(e) =>
-                                handleInputChange(e.target.name, e.target.value)
-                              }
-                              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                              placeholder="Price"
-                            />
-                          </div>
                           <div className="h-fit w-fit">
-                            <label
-                              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                              htmlFor="salesDate"
-                            >
+                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white" htmlFor="salesDate">
                               Sales Date
                             </label>
                             <input
@@ -236,9 +236,7 @@ export default function AddSale({
                               id="saleDate"
                               name="saleDate"
                               value={sale.saleDate}
-                              onChange={(e) =>
-                                handleInputChange(e.target.name, e.target.value)
-                              }
+                              onChange={(e) => handleInputChange(e.target.name, e.target.value)}
                             />
                           </div>
                         </div>
@@ -246,15 +244,10 @@ export default function AddSale({
                           <div className="rounded-md bg-red-50 p-4">
                             <div className="flex">
                               <div className="flex-shrink-0">
-                                <ExclamationIcon
-                                  className="h-5 w-5 text-red-400"
-                                  aria-hidden="true"
-                                />
+                                <ExclamationIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
                               </div>
                               <div className="ml-3">
-                                <h3 className="text-sm font-medium text-red-800">
-                                  {errorMessage}
-                                </h3>
+                                <h3 className="text-sm font-medium text-red-800">{errorMessage}</h3>
                               </div>
                             </div>
                           </div>
