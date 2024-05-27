@@ -20,6 +20,9 @@ app.get("/search", product.searchProduct);
 // Import Products
 app.post("/import", product.importProducts);
 
+// Delete All Products
+app.delete("/deleteAll", product.deleteAllProducts);
+
 // http://localhost:4000/api/product/search?searchTerm=fa
 
 module.exports = app;

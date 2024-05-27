@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
+import { CSVLink } from "react-csv"; // Import CSVLink
 import AddProduct from "../components/AddProduct";
 import UpdateProduct from "../components/UpdateProduct";
 import ImportProducts from "../components/ImportProducts"; // Import the new component
@@ -163,13 +164,21 @@ function Inventory() {
     pageNumbers.push(i);
   }
 
+  // Prepare CSV data
+  const csvData = products.map(product => ({
+    name: product.name,
+    category: product.category,
+    stock: product.stock,
+    description: product.description
+  }));
+
   return (
-    <div className="col-span-12 lg:col-span-10  flex justify-center">
-      <div className=" flex flex-col gap-5 w-11/12">
+    <div className="col-span-12 lg:col-span-10 flex justify-center">
+      <div className="flex flex-col gap-5 w-11/12">
         <div className="bg-white rounded p-3">
           <span className="font-semibold px-4">Overall Inventory</span>
-          <div className=" flex flex-col md:flex-row justify-center items-center  ">
-            <div className="flex flex-col p-10  w-full  md:w-3/12  ">
+          <div className="flex flex-col md:flex-row justify-center items-center">
+            <div className="flex flex-col p-10 w-full md:w-3/12">
               <span className="font-semibold text-blue-600 text-base">
                 Total Products
               </span>
@@ -177,7 +186,7 @@ function Inventory() {
                 {products.length}
               </span>
             </div>
-            <div className="flex flex-col p-10  w-full  md:w-3/12  ">
+            <div className="flex flex-col p-10 w-full md:w-3/12">
               <span className="font-semibold text-orange-400 text-base">
                 Active Stores
               </span>
@@ -185,7 +194,7 @@ function Inventory() {
                 {stores.length}
               </span>
             </div>
-            <div className="flex flex-col gap-3 p-10  w-full  md:w-3/12  sm:border-y-2 md:border-x-2 md:border-y-0">
+            <div className="flex flex-col gap-3 p-10 w-full md:w-3/12 sm:border-y-2 md:border-x-2 md:border-y-0">
               <span className="font-semibold text-purple-600 text-base">
                 Total Categories
               </span>
@@ -200,7 +209,7 @@ function Inventory() {
                 </div>
               </div>
             </div>
-            <div className="flex flex-col gap-3 p-10  w-full  md:w-3/12  border-y-2  md:border-x-2 md:border-y-0">
+            <div className="flex flex-col gap-3 p-10 w-full md:w-3/12 border-y-2 md:border-x-2 md:border-y-0">
               <span className="font-semibold text-red-600 text-base">
                 Stocks Status
               </span>
@@ -247,11 +256,11 @@ function Inventory() {
         )}
 
         {/* Table  */}
-        <div className="overflow-x-auto rounded-lg border bg-white border-gray-200 ">
+        <div className="overflow-x-auto rounded-lg border bg-white border-gray-200">
           <div className="flex justify-between pt-5 pb-3 px-3">
             <div className="flex gap-4 justify-center items-center">
               <span className="font-bold">Products</span>
-              <div className="flex justify-center items-center px-2 border-2 rounded-md ">
+              <div className="flex justify-center items-center px-2 border-2 rounded-md">
                 <img
                   alt="search-icon"
                   className="w-5 h-5"
@@ -290,7 +299,7 @@ function Inventory() {
             </div>
             <div className="flex gap-4">
               <button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold p-2 text-xs  rounded"
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold p-2 text-xs rounded"
                 onClick={addProductModalSetting}
               >
                 Add Product
@@ -301,6 +310,14 @@ function Inventory() {
               >
                 Import Products
               </button>
+              <CSVLink
+                data={csvData}
+                filename={"products_inventory.csv"}
+                className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold p-2 text-xs rounded"
+                target="_blank"
+              >
+                Export Products
+              </CSVLink>
             </div>
           </div>
           <table className="min-w-full divide-y-2 divide-gray-200 text-sm">

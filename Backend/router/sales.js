@@ -23,6 +23,9 @@ router.get("/get/salescountlast30days", sales.getSalesCountLast30Days);
 // Import Sales
 router.post("/import", sales.importSales);
 
+// Delete All Sales
+router.delete("/deleteAll", sales.deleteAllSales);
+
 module.exports = router;
 
 // http://localhost:4000/api/sales/add POST

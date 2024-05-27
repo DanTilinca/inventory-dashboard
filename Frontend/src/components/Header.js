@@ -5,6 +5,7 @@ import AuthContext from '../AuthContext';
 import { Link } from 'react-router-dom';
 import GridViewTwoToneIcon from '@mui/icons-material/GridViewTwoTone';
 import InviteCodesModal from './InviteCodeMenu';
+import AdminOptionsModal from './AdminOptionsModal';
 
 const navigation = [
   { name: 'Dashboard', href: '/', current: true },
@@ -16,6 +17,7 @@ const navigation = [
 
 const userNavigation = [
   { name: 'Invite Codes', href: '#' },
+  { name: 'Admin Options', href: '#' },
   { name: 'Sign Out', href: './login' },
 ];
 
@@ -36,14 +38,49 @@ const ProfilePicture = ({ imageUrl, firstName, lastName }) => {
 };
 
 export default function Header() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const authContext = useContext(AuthContext);
   const localStorageData = JSON.parse(localStorage.getItem('user')) || {};
-  
+
+  const handleDeleteInventory = () => {
+    fetch('http://localhost:4000/api/product/deleteAll', { method: 'DELETE' })
+      .then(response => response.json())
+      .then(() => {
+        setIsAdminModalOpen(false);
+      })
+      .catch(err => console.log(err));
+  };
+
+  const handleDeleteSales = () => {
+    fetch('http://localhost:4000/api/sales/deleteAll', { method: 'DELETE' })
+      .then(response => response.json())
+      .then(() => {
+        setIsAdminModalOpen(false);
+      })
+      .catch(err => console.log(err));
+  };
+
+  const handleDeletePurchases = () => {
+    fetch('http://localhost:4000/api/purchase/deleteAll', { method: 'DELETE' })
+      .then(response => response.json())
+      .then(() => {
+        setIsAdminModalOpen(false);
+      })
+      .catch(err => console.log(err));
+  };
+
   return (
     <>
       <div className="min-h-full">
-        <InviteCodesModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+        <InviteCodesModal isOpen={isInviteModalOpen} onClose={() => setIsInviteModalOpen(false)} />
+        <AdminOptionsModal
+          isOpen={isAdminModalOpen}
+          onClose={() => setIsAdminModalOpen(false)}
+          handleDeleteInventory={handleDeleteInventory}
+          handleDeleteSales={handleDeleteSales}
+          handleDeletePurchases={handleDeletePurchases}
+        />
         <Disclosure as="nav" className="bg-blue-900">
           {({ open }) => (
             <>
@@ -95,7 +132,9 @@ export default function Header() {
                                     className={classNames(active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700')}
                                     onClick={() => {
                                       if (item.name === 'Invite Codes') {
-                                        setIsModalOpen(true);
+                                        setIsInviteModalOpen(true);
+                                      } else if (item.name === 'Admin Options') {
+                                        setIsAdminModalOpen(true);
                                       } else if (item.name === 'Sign Out') {
                                         authContext.signout();
                                       }

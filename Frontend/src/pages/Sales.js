@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
+import { CSVLink } from "react-csv"; // Import CSVLink
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
@@ -97,6 +98,17 @@ function Sales() {
 
   const filteredData = sales.filter(item => item.ProductID?.name?.toLowerCase().includes(searchText.toLowerCase()));
 
+  // Prepare CSV data
+  const csvData = sales.map(s => ({
+    productName: s.ProductID.name,
+    category: s.ProductID.category,
+    storeName: s.StoreID.name,
+    stockSold: s.StockSold,
+    saleDate: new Date(s.SaleDate).toLocaleDateString(),
+    totalSaleAmount: s.TotalSaleAmount,
+    pricePerUnit: (s.TotalSaleAmount / s.StockSold).toFixed(2)
+  }));
+
   return (
     <div className="col-span-12 lg:col-span-10 flex justify-center">
       <div className="flex flex-col gap-5 w-11/12">
@@ -118,7 +130,7 @@ function Sales() {
         <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 150px)', width: '100%' }}>
           <div className="flex flex-col pt-5 pb-3 px-3 bg-white shadow rounded-lg">
             <div className="flex justify-center items-center mb-4">
-              <span className="font-bold text-3xl"> Sales</span>
+              <span className="font-bold text-3xl">Sales</span>
             </div>
             <div className="flex justify-between items-center">
               <input
@@ -141,6 +153,14 @@ function Sales() {
                 >
                   Import Sales
                 </button>
+                <CSVLink
+                  data={csvData}
+                  filename={"sales.csv"}
+                  className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded text-sm"
+                  target="_blank"
+                >
+                  Export Sales
+                </CSVLink>
               </div>
             </div>
           </div>
