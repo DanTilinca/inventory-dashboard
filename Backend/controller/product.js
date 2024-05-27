@@ -87,11 +87,22 @@ const importProducts = async (req, res) => {
   }
 };
 
+// Delete All Products
+const deleteAllProducts = async (req, res) => {
+  try {
+    await Product.deleteMany({});
+    res.status(200).send({ message: "All products deleted successfully" });
+  } catch (error) {
+    res.status(500).send({ message: "Error deleting products", error });
+  }
+};
+
 module.exports = {
   addProduct,
   getAllProducts,
   deleteSelectedProduct,
   updateSelectedProduct,
   searchProduct,
-  importProducts
+  importProducts,
+  deleteAllProducts
 };

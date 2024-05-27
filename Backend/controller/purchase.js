@@ -128,4 +128,21 @@ const importPurchases = async (req, res) => {
   }
 };
 
-module.exports = { addPurchase, getPurchaseData, getTotalPurchaseAmount, getTotalPurchaseAmountLast30Days, getPurchaseCountLast30Days, importPurchases };
+// Delete All Purchases
+const deleteAllPurchases = async (req, res) => {
+  try {
+    await Purchase.deleteMany({});
+    res.status(200).send({ message: "All purchases deleted successfully" });
+  } catch (error) {
+    res.status(500).send({ message: "Error deleting purchases", error });
+  }
+};
+
+module.exports = { 
+  addPurchase, 
+  getPurchaseData, 
+  getTotalPurchaseAmount, 
+  getTotalPurchaseAmountLast30Days, 
+  getPurchaseCountLast30Days, 
+  importPurchases,
+  deleteAllPurchases};

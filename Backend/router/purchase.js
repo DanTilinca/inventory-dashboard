@@ -20,6 +20,9 @@ router.get("/get/purchasecountlast30days", purchase.getPurchaseCountLast30Days);
 // Import Purchases
 router.post("/import", purchase.importPurchases);
 
+// Delete All Purchases
+router.delete("/deleteAll", purchase.deleteAllPurchases);
+
 module.exports = router;
 
 // http://localhost:4000/api/purchase/add POST

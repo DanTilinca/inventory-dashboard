@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
+import { CSVLink } from "react-csv"; // Import CSVLink
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
@@ -85,6 +86,16 @@ function PurchaseDetails() {
 
   const filteredData = purchase.filter(item => item.ProductID?.name?.toLowerCase().includes(searchText.toLowerCase()));
 
+  // Prepare CSV data
+  const csvData = purchase.map(p => ({
+    productName: p.ProductID.name,
+    category: p.ProductID.category,
+    quantityPurchased: p.QuantityPurchased,
+    purchaseDate: new Date(p.PurchaseDate).toLocaleDateString(),
+    totalPurchaseAmount: p.TotalPurchaseAmount,
+    pricePerUnit: (p.TotalPurchaseAmount / p.QuantityPurchased).toFixed(2)
+  }));
+
   return (
     <div className="col-span-12 lg:col-span-10 flex justify-center">
       <div className="flex flex-col gap-5 w-11/12">
@@ -128,6 +139,14 @@ function PurchaseDetails() {
                 >
                   Import Purchases
                 </button>
+                <CSVLink
+                  data={csvData}
+                  filename={"purchases.csv"}
+                  className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded text-sm"
+                  target="_blank"
+                >
+                  Export Purchases
+                </CSVLink>
               </div>
             </div>
           </div>

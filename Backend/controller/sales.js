@@ -191,6 +191,16 @@ const importSales = async (req, res) => {
   }
 };
 
+// Delete All Sales
+const deleteAllSales = async (req, res) => {
+  try {
+    await Sales.deleteMany({});
+    res.status(200).send({ message: "All sales deleted successfully" });
+  } catch (error) {
+    res.status(500).send({ message: "Error deleting sales", error });
+  }
+};
+
 module.exports = {
   addSales,
   getMonthlySales,
@@ -199,4 +209,5 @@ module.exports = {
   getTotalSalesAmountLast30Days,
   getSalesCountLast30Days,
   importSales,
+  deleteAllSales
 };
