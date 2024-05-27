@@ -4,10 +4,12 @@ import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import 'ag-grid-enterprise';
 import AddPurchaseDetails from "../components/AddPurchaseDetails";
+import ImportPurchases from "../components/ImportPurchases"; // Import the new modal
 import AuthContext from "../AuthContext";
 
 function PurchaseDetails() {
   const [showPurchaseModal, setPurchaseModal] = useState(false);
+  const [showImportModal, setImportModal] = useState(false); // State for import modal
   const [purchase, setAllPurchaseData] = useState([]);
   const [products, setAllProducts] = useState([]);
   const [updatePage, setUpdatePage] = useState(true);
@@ -43,6 +45,11 @@ function PurchaseDetails() {
   // Modal for Purchase Add
   const addSaleModalSetting = () => {
     setPurchaseModal(!showPurchaseModal);
+  };
+
+  // Modal for Import Purchases
+  const importPurchaseModalSetting = () => {
+    setImportModal(!showImportModal);
   };
 
   // Handle Page Update
@@ -89,6 +96,12 @@ function PurchaseDetails() {
             authContext={authContext}
           />
         )}
+        {showImportModal && (
+          <ImportPurchases
+            importPurchaseModalSetting={importPurchaseModalSetting}
+            handlePageUpdate={handlePageUpdate}
+          />
+        )}
         <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 150px)', width: '100%' }}>
           <div className="flex flex-col pt-5 pb-3 px-3 bg-white shadow rounded-lg">
             <div className="flex justify-center items-center mb-4">
@@ -102,12 +115,20 @@ function PurchaseDetails() {
                 onChange={handleSearch}
                 className="border p-2 rounded text-sm"
               />
-              <button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
-                onClick={addSaleModalSetting}
-              >
-                Add Purchase
-              </button>
+              <div className="flex gap-4">
+                <button
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
+                  onClick={addSaleModalSetting}
+                >
+                  Add Purchase
+                </button>
+                <button
+                  className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded text-sm"
+                  onClick={importPurchaseModalSetting}
+                >
+                  Import Purchases
+                </button>
+              </div>
             </div>
           </div>
           <AgGridReact

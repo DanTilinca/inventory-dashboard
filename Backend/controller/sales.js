@@ -1,5 +1,7 @@
 const Sales = require("../models/sales");
-const soldStock = require("../controller/soldStock");
+const Product = require("../models/Product");
+const Store = require("../models/Store");
+const soldStock = require("./soldStock");
 
 // Add Sales
 const addSales = (req, res) => {
@@ -105,4 +107,96 @@ const getSalesCountLast30Days = async (req, res) => {
   }
 };
 
-module.exports = { addSales, getMonthlySales, getSalesData, getTotalSalesAmount, getTotalSalesAmountLast30Days, getSalesCountLast30Days };
+// Import Sales
+const importSales = async (req, res) => {
+  const sales = req.body;
+  console.log("Received sales for import:", sales);
+
+  try {
+    const productMap = {};
+    const storeMap = {};
+    const errors = [];
+
+    // First, find all unique product names and store names in the CSV
+    const productNames = [...new Set(sales.map(sale => sale.ProductName))];
+    const storeNames = [...new Set(sales.map(sale => sale.StoreName))];
+
+    // Fetch the product IDs for these names
+    const products = await Product.find({ name: { $in: productNames } });
+    // Fetch the store IDs for these names
+    const stores = await Store.find({ name: { $in: storeNames } });
+
+    // Create a map from product name to product ID and stock
+    products.forEach(product => {
+      productMap[product.name] = {
+        id: product._id,
+        stock: product.stock
+      };
+    });
+
+    // Create a map from store name to store ID
+    stores.forEach(store => {
+      storeMap[store.name] = store._id;
+    });
+
+    // Replace product and store names with IDs in sales and check stock
+    const salesWithIDs = sales.map(sale => {
+      const productInfo = productMap[sale.ProductName];
+      const storeID = storeMap[sale.StoreName];
+
+      if (!productInfo) {
+        errors.push(`Product name "${sale.ProductName}" not found`);
+        return null;
+      }
+      if (!storeID) {
+        errors.push(`Store name "${sale.StoreName}" not found`);
+        return null;
+      }
+
+      let stockSold = sale.StockSold;
+
+      // Check if stock sold is greater than available stock
+      if (productInfo.stock < stockSold) {
+        stockSold = productInfo.stock;
+      }
+
+      // Skip sale if no stock is available
+      if (stockSold <= 0) {
+        return null;
+      }
+
+      return {
+        userID: sale.userID,
+        ProductID: productInfo.id,
+        StoreID: storeID,
+        StockSold: stockSold,
+        SaleDate: sale.SaleDate,
+        TotalSaleAmount: sale.TotalSaleAmount * (stockSold / sale.StockSold), // Adjust total sale amount
+        PricePerUnit: sale.PricePerUnit
+      };
+    }).filter(sale => sale !== null);
+
+    if (errors.length > 0) {
+      return res.status(400).send({ error: errors.join(", ") });
+    }
+
+    const result = await Sales.insertMany(salesWithIDs);
+    salesWithIDs.forEach(sale => {
+      soldStock(sale.ProductID, sale.StockSold);
+    });
+    res.status(200).send(result);
+  } catch (err) {
+    console.error("Error inserting sales:", err);
+    res.status(400).send({ error: "Failed to import sales" });
+  }
+};
+
+module.exports = {
+  addSales,
+  getMonthlySales,
+  getSalesData,
+  getTotalSalesAmount,
+  getTotalSalesAmountLast30Days,
+  getSalesCountLast30Days,
+  importSales,
+};

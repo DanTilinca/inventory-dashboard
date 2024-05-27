@@ -4,10 +4,12 @@ import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import 'ag-grid-enterprise';
 import AddSale from "../components/AddSale";
+import ImportSales from "../components/ImportSales"; // Import the new modal
 import AuthContext from "../AuthContext";
 
 function Sales() {
   const [showSaleModal, setShowSaleModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false); // State for import modal
   const [sales, setAllSalesData] = useState([]);
   const [products, setAllProducts] = useState([]);
   const [stores, setAllStores] = useState([]);
@@ -56,6 +58,11 @@ function Sales() {
     setShowSaleModal(!showSaleModal);
   };
 
+  // Modal for Import Sales
+  const importSalesModalSetting = () => {
+    setShowImportModal(!showImportModal);
+  };
+
   // Handle Page Update
   const handlePageUpdate = () => {
     setUpdatePage(!updatePage);
@@ -102,6 +109,12 @@ function Sales() {
             authContext={authContext}
           />
         )}
+        {showImportModal && (
+          <ImportSales
+            importSalesModalSetting={importSalesModalSetting}
+            handlePageUpdate={handlePageUpdate}
+          />
+        )}
         <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 150px)', width: '100%' }}>
           <div className="flex flex-col pt-5 pb-3 px-3 bg-white shadow rounded-lg">
             <div className="flex justify-center items-center mb-4">
@@ -115,12 +128,20 @@ function Sales() {
                 onChange={handleSearch}
                 className="border p-2 rounded text-sm"
               />
-              <button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
-                onClick={addSaleModalSetting}
-              >
-                Add Sale
-              </button>
+              <div className="flex gap-4">
+                <button
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
+                  onClick={addSaleModalSetting}
+                >
+                  Add Sale
+                </button>
+                <button
+                  className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded text-sm"
+                  onClick={importSalesModalSetting}
+                >
+                  Import Sales
+                </button>
+              </div>
             </div>
           </div>
           <AgGridReact

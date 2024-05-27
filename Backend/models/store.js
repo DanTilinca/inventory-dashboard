@@ -31,5 +31,5 @@ const StoreSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Store = mongoose.model("store", StoreSchema);
+const Store = mongoose.models.store || mongoose.model("store", StoreSchema);
 module.exports = Store;

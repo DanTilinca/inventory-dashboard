@@ -17,6 +17,9 @@ router.get("/get/totalpurchaseamountlast30days", purchase.getTotalPurchaseAmount
 // Get number of purchases in the last 30 days
 router.get("/get/purchasecountlast30days", purchase.getPurchaseCountLast30Days);
 
+// Import Purchases
+router.post("/import", purchase.importPurchases);
+
 module.exports = router;
 
 // http://localhost:4000/api/purchase/add POST
