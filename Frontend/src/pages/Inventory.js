@@ -4,12 +4,14 @@ import UpdateProduct from "../components/UpdateProduct";
 import AuthContext from "../AuthContext";
 
 const categories = ["All", "Electronics", "Groceries", "Healthcare", "Others"];
+const itemsPerPageOptions = [5, 10, 20, 50];
 
 function Inventory() {
   const [showProductModal, setShowProductModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateProduct, setUpdateProduct] = useState([]);
   const [products, setAllProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [updatePage, setUpdatePage] = useState(true);
@@ -18,12 +20,15 @@ function Inventory() {
   const [outOfStockCount, setOutOfStockCount] = useState(0);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "ascending" });
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const authContext = useContext(AuthContext);
 
   useEffect(() => {
     fetchProductsData();
     fetchSalesData();
-  }, [updatePage, selectedCategory, searchTerm, sortConfig]);
+  }, [updatePage, selectedCategory, searchTerm, sortConfig, currentPage, itemsPerPage]);
 
   // Fetching Data of All Products
   const fetchProductsData = () => {
@@ -55,6 +60,7 @@ function Inventory() {
         }
 
         setAllProducts(filteredData);
+        updateFilteredProducts(filteredData);
 
         // Calculate low and out of stock counts
         let lowStock = 0;
@@ -79,6 +85,13 @@ function Inventory() {
       .then((data) => {
         setAllStores(data);
       });
+  };
+
+  // Update filtered products for current page
+  const updateFilteredProducts = (data) => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    setFilteredProducts(data.slice(startIndex, endIndex));
   };
 
   // Modal for Product ADD
@@ -125,6 +138,24 @@ function Inventory() {
     setSortConfig({ key, direction });
   };
 
+  // Handle Items Per Page Change
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(Number(e.target.value));
+    setCurrentPage(1); // Reset to first page when items per page changes
+  };
+
+  // Handle Page Change
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // Generate Page Numbers
+  const totalPages = Math.ceil(products.length / itemsPerPage);
+  const pageNumbers = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pageNumbers.push(i);
+  }
+
   return (
     <div className="col-span-12 lg:col-span-10  flex justify-center">
       <div className=" flex flex-col gap-5 w-11/12">
@@ -168,7 +199,7 @@ function Inventory() {
               </span>
               <div className="flex gap-8">
                 <div className="flex flex-col">
-                  <span class='font-semibold text-gray-600 text-base'>
+                  <span className='font-semibold text-gray-600 text-base'>
                     {lowStockCount}
                   </span>
                   <span className='font-thin text-gray-400 text-xs'>
@@ -198,6 +229,7 @@ function Inventory() {
           <UpdateProduct
             updateProductData={updateProduct}
             updateModalSetting={updateProductModalSetting}
+            handlePageUpdate={handlePageUpdate}
           />
         )}
 
@@ -228,6 +260,17 @@ function Inventory() {
                 {categories.map((category, index) => (
                   <option key={index} value={category}>
                     {category}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="border-2 rounded-md text-xs px-2 w-40"
+                value={itemsPerPage}
+                onChange={handleItemsPerPageChange}
+              >
+                {itemsPerPageOptions.map((option, index) => (
+                  <option key={index} value={option}>
+                    {option} items per page
                   </option>
                 ))}
               </select>
@@ -268,12 +311,8 @@ function Inventory() {
                 <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
                   Description
                 </th>
-                <th
-                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
-                  onClick={() => handleSort("availability")}
-                >
+                <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
                   Availability
-                  {sortConfig.key === "availability" && (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
                 </th>
                 <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
                   Options
@@ -282,7 +321,7 @@ function Inventory() {
             </thead>
 
             <tbody className="divide-y divide-gray-200">
-              {products.map((element) => {
+              {filteredProducts.map((element) => {
                 let stockStatus = "";
                 let stockClass = "";
 
@@ -333,6 +372,22 @@ function Inventory() {
               })}
             </tbody>
           </table>
+          <div className="flex justify-between items-center p-4">
+            <div>
+              Showing {Math.min((currentPage - 1) * itemsPerPage + 1, products.length)} to {Math.min(currentPage * itemsPerPage, products.length)} of {products.length} products
+            </div>
+            <div className="flex gap-2">
+              {pageNumbers.map(number => (
+                <button
+                  key={number}
+                  className={`px-4 py-2 border ${currentPage === number ? 'bg-blue-500 text-white' : 'bg-white text-black'}`}
+                  onClick={() => handlePageChange(number)}
+                >
+                  {number}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>

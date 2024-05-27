@@ -10,8 +10,6 @@ import MapIcon from '@mui/icons-material/Map';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 
 function SideMenu() {
-  const localStorageData = JSON.parse(localStorage.getItem("user"));
-
   return (
     <div className="h-full flex flex-col justify-between bg-gray-50 text-gray-700 hidden lg:flex">
       <div className="px-6 py-8">

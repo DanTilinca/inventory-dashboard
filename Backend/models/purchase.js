@@ -17,10 +17,14 @@ const PurchaseSchema = new mongoose.Schema(
       required: true,
     },
     PurchaseDate: {
-      type: String,
+      type: Date,
       required: true,
     },
     TotalPurchaseAmount: {
+      type: Number,
+      required: true,
+    },
+    PricePerUnit: {
       type: Number,
       required: true,
     },

@@ -8,6 +8,7 @@ import Store from "./pages/Store";
 import Sales from "./pages/Sales";
 import StoresMapPage from "./pages/StoresMap";
 import PurchaseDetails from "./pages/PurchaseDetails";
+import StatisticsPage from "./pages/Statistics";
 import HomePageClient from "./pages/HomePageClient";
 import StoresMapClient from "./pages/StoresMapClient";
 import NoPageFound from "./pages/NoPageFound";
@@ -79,6 +80,7 @@ const App = () => {
             <Route path="/sales" element={<Sales />} />
             <Route path="/manage-store" element={<Store />} />
             <Route path="/stores-map" element={<StoresMapPage />} />
+            <Route path="/statistics" element={<StatisticsPage />} />
           </Route>
           <Route
             path="/client"

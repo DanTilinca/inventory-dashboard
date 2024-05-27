@@ -1,6 +1,7 @@
 import { Fragment, useRef, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/outline";
+import Select from "react-select";
 
 export default function AddPurchaseDetails({
   addSaleModalSetting,
@@ -14,6 +15,7 @@ export default function AddPurchaseDetails({
     quantityPurchased: "",
     purchaseDate: "",
     totalPurchaseAmount: "",
+    pricePerUnit: "",
   });
   const [open, setOpen] = useState(true);
   const cancelButtonRef = useRef(null);
@@ -24,17 +26,40 @@ export default function AddPurchaseDetails({
 
   // Handling Input Change for input fields
   const handleInputChange = (key, value) => {
-    setPurchase({ ...purchase, [key]: key === "quantityPurchased" ? parseInt(value, 10) : value });
+    setPurchase((prevPurchase) => {
+      const updatedPurchase = { ...prevPurchase, [key]: value };
+
+      if (key === "quantityPurchased" || key === "totalPurchaseAmount") {
+        const quantity = parseFloat(updatedPurchase.quantityPurchased);
+        const totalAmount = parseFloat(updatedPurchase.totalPurchaseAmount);
+        if (quantity && totalAmount) {
+          updatedPurchase.pricePerUnit = (totalAmount / quantity).toFixed(2);
+        }
+      } else if (key === "pricePerUnit") {
+        const quantity = parseFloat(updatedPurchase.quantityPurchased);
+        const pricePerUnit = parseFloat(updatedPurchase.pricePerUnit);
+        if (quantity && pricePerUnit) {
+          updatedPurchase.totalPurchaseAmount = (quantity * pricePerUnit).toFixed(2);
+        }
+      }
+
+      return updatedPurchase;
+    });
   };
 
   // POST Data
-  const addSale = () => {
+  const addPurchase = () => {
+    const purchaseData = {
+      ...purchase,
+      purchaseDate: new Date(purchase.purchaseDate), // Convert date string to Date object
+    };
+
     fetch("http://localhost:4000/api/purchase/add", {
       method: "POST",
       headers: {
         "Content-type": "application/json",
       },
-      body: JSON.stringify(purchase),
+      body: JSON.stringify(purchaseData),
     })
       .then((res) => res.json())
       .then((result) => {
@@ -43,8 +68,8 @@ export default function AddPurchaseDetails({
         addSaleModalSetting();
       })
       .catch((err) => {
-        console.error("Error adding sale:", err);
-        alert("Error adding sale. Please check console for details.");
+        console.error("Error adding purchase:", err);
+        alert("Error adding purchase. Please check console for details.");
       });
   };
 
@@ -70,7 +95,7 @@ export default function AddPurchaseDetails({
         </Transition.Child>
 
         <div className="fixed inset-0 z-10 overflow-y-auto">
-          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0 ">
+          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -80,55 +105,38 @@ export default function AddPurchaseDetails({
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg overflow-y-scroll">
+              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
                 <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                   <div className="sm:flex sm:items-start">
                     <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
-                      <PlusIcon
-                        className="h-6 w-6 text-blue-400"
-                        aria-hidden="true"
-                      />
+                      <PlusIcon className="h-6 w-6 text-blue-400" aria-hidden="true" />
                     </div>
-                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left ">
-                      <Dialog.Title
-                        as="h3"
-                        className="text-lg  py-4 font-semibold leading-6 text-gray-900 "
-                      >
+                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                      <Dialog.Title as="h3" className="text-lg py-4 font-semibold leading-6 text-gray-900">
                         Purchase Details
                       </Dialog.Title>
                       <form action="#">
                         <div className="grid gap-4 mb-4 sm:grid-cols-2">
                           <div>
-                            <label
-                              htmlFor="productID"
-                              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                            >
+                            <label htmlFor="productID" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                               Product Name
                             </label>
-                            <select
+                            <Select
                               id="productID"
-                              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                               name="productID"
-                              value={purchase.productID}
-                              onChange={(e) =>
-                                handleInputChange(e.target.name, e.target.value)
-                              }
-                            >
-                              <option value="">Select Product</option>
-                              {products.map((element) => {
-                                return (
-                                  <option key={element._id} value={element._id}>
-                                    {element.name}
-                                  </option>
-                                );
-                              })}
-                            </select>
+                              options={products.map(product => ({
+                                value: product._id,
+                                label: product.name,
+                              }))}
+                              onChange={(option) => handleInputChange("productID", option.value)}
+                              className="basic-single"
+                              classNamePrefix="select"
+                              isSearchable
+                              placeholder="Select Product"
+                            />
                           </div>
                           <div>
-                            <label
-                              htmlFor="quantityPurchased"
-                              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                            >
+                            <label htmlFor="quantityPurchased" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                               Quantity Purchased
                             </label>
                             <input
@@ -136,37 +144,41 @@ export default function AddPurchaseDetails({
                               name="quantityPurchased"
                               id="quantityPurchased"
                               value={purchase.quantityPurchased}
-                              onChange={(e) =>
-                                handleInputChange(e.target.name, e.target.value)
-                              }
+                              onChange={(e) => handleInputChange(e.target.name, e.target.value)}
                               className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                               placeholder="Quantity Purchased"
                             />
                           </div>
                           <div>
-                            <label
-                              htmlFor="totalPurchaseAmount"
-                              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                            >
+                            <label htmlFor="pricePerUnit" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                              Price per Unit
+                            </label>
+                            <input
+                              type="number"
+                              name="pricePerUnit"
+                              id="pricePerUnit"
+                              value={purchase.pricePerUnit}
+                              onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                              placeholder="Price per Unit"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="totalPurchaseAmount" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                               Total Purchase Amount
                             </label>
                             <input
                               type="number"
                               name="totalPurchaseAmount"
-                              id="price"
+                              id="totalPurchaseAmount"
                               value={purchase.totalPurchaseAmount}
-                              onChange={(e) =>
-                                handleInputChange(e.target.name, e.target.value)
-                              }
+                              onChange={(e) => handleInputChange(e.target.name, e.target.value)}
                               className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                              placeholder="Price"
+                              placeholder="Total Purchase Amount"
                             />
                           </div>
                           <div className="h-fit w-fit">
-                            <label
-                              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                              htmlFor="purchaseDate"
-                            >
+                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white" htmlFor="purchaseDate">
                               Purchase Date
                             </label>
                             <input
@@ -175,9 +187,7 @@ export default function AddPurchaseDetails({
                               id="purchaseDate"
                               name="purchaseDate"
                               value={purchase.purchaseDate}
-                              onChange={(e) =>
-                                handleInputChange(e.target.name, e.target.value)
-                            }
+                              onChange={(e) => handleInputChange(e.target.name, e.target.value)}
                             />
                           </div>
                         </div>
@@ -193,7 +203,7 @@ export default function AddPurchaseDetails({
                         ? "bg-blue-600 hover:bg-blue-500"
                         : "bg-gray-300"
                     } px-3 py-2 text-sm font-semibold text-white shadow-sm sm:ml-3 sm:w-auto`}
-                    onClick={addSale}
+                    onClick={addPurchase}
                     disabled={!isFormComplete}
                   >
                     Add
