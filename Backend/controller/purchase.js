@@ -1,4 +1,5 @@
 const Purchase = require("../models/purchase");
+const Product = require("../models/Product");
 const purchaseStock = require("./purchaseStock");
 
 // Add Purchase Details
@@ -75,4 +76,56 @@ const getPurchaseCountLast30Days = async (req, res) => {
   }
 };
 
-module.exports = { addPurchase, getPurchaseData, getTotalPurchaseAmount, getTotalPurchaseAmountLast30Days, getPurchaseCountLast30Days };
+// Import Purchases
+const importPurchases = async (req, res) => {
+  const purchases = req.body;
+  console.log("Received purchases for import:", purchases);
+
+  try {
+    const productMap = {};
+    const errors = [];
+
+    // First, find all unique product names in the CSV
+    const productNames = [...new Set(purchases.map(purchase => purchase.ProductName))];
+
+    // Fetch the product IDs for these names
+    const products = await Product.find({ name: { $in: productNames } });
+
+    // Create a map from product name to product ID
+    products.forEach(product => {
+      productMap[product.name] = product._id;
+    });
+
+    // Replace product names with IDs in purchases
+    const purchasesWithIDs = purchases.map(purchase => {
+      const productID = productMap[purchase.ProductName];
+      if (!productID) {
+        errors.push(`Product name "${purchase.ProductName}" not found`);
+        return null;
+      }
+      return {
+        userID: purchase.userID,
+        ProductID: productID,
+        QuantityPurchased: purchase.QuantityPurchased,
+        PurchaseDate: purchase.PurchaseDate,
+        TotalPurchaseAmount: purchase.TotalPurchaseAmount,
+        PricePerUnit: purchase.PricePerUnit
+      };
+    }).filter(purchase => purchase !== null);
+
+    if (errors.length > 0) {
+      return res.status(400).send({ error: errors.join(", ") });
+    }
+
+    const result = await Purchase.insertMany(purchasesWithIDs);
+    purchasesWithIDs.forEach(purchase => {
+      purchaseStock(purchase.ProductID, purchase.QuantityPurchased);
+    });
+    res.status(200).send(result);
+  } catch (err) {
+    console.error("Error inserting purchases:", err);
+    res.status(400).send({ error: "Failed to import purchases" });
+  }
+};
+
+module.exports = { addPurchase, getPurchaseData, getTotalPurchaseAmount, getTotalPurchaseAmountLast30Days, getPurchaseCountLast30Days, importPurchases };

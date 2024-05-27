@@ -73,10 +73,25 @@ const searchProduct = async (req, res) => {
   res.json(products);
 };
 
+// Import Products
+const importProducts = async (req, res) => {
+  const products = req.body;
+  console.log("Received products for import:", products);
+
+  try {
+    const result = await Product.insertMany(products);
+    res.status(200).send(result);
+  } catch (err) {
+    console.error("Error inserting products:", err);
+    res.status(400).send({ error: "Failed to import products" });
+  }
+};
+
 module.exports = {
   addProduct,
   getAllProducts,
   deleteSelectedProduct,
   updateSelectedProduct,
   searchProduct,
+  importProducts
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import AddProduct from "../components/AddProduct";
 import UpdateProduct from "../components/UpdateProduct";
+import ImportProducts from "../components/ImportProducts"; // Import the new component
 import AuthContext from "../AuthContext";
 
 const categories = ["All", "Electronics", "Groceries", "Healthcare", "Others"];
@@ -9,6 +10,7 @@ const itemsPerPageOptions = [5, 10, 20, 50];
 function Inventory() {
   const [showProductModal, setShowProductModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false); // State for import modal
   const [updateProduct, setUpdateProduct] = useState([]);
   const [products, setAllProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -103,6 +105,11 @@ function Inventory() {
   const updateProductModalSetting = (selectedProductData) => {
     setUpdateProduct(selectedProductData);
     setShowUpdateModal(!showUpdateModal);
+  };
+
+  // Modal for Import Products
+  const importProductModalSetting = () => {
+    setShowImportModal(!showImportModal);
   };
 
   // Delete item
@@ -232,6 +239,12 @@ function Inventory() {
             handlePageUpdate={handlePageUpdate}
           />
         )}
+        {showImportModal && (
+          <ImportProducts
+            importProductModalSetting={importProductModalSetting}
+            handlePageUpdate={handlePageUpdate}
+          />
+        )}
 
         {/* Table  */}
         <div className="overflow-x-auto rounded-lg border bg-white border-gray-200 ">
@@ -281,6 +294,12 @@ function Inventory() {
                 onClick={addProductModalSetting}
               >
                 Add Product
+              </button>
+              <button
+                className="bg-green-500 hover:bg-green-700 text-white font-bold p-2 text-xs rounded"
+                onClick={importProductModalSetting}
+              >
+                Import Products
               </button>
             </div>
           </div>

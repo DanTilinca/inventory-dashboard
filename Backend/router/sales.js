@@ -20,6 +20,9 @@ router.get("/get/totalsaleamountlast30days", sales.getTotalSalesAmountLast30Days
 // Get number of sales in the last 30 days
 router.get("/get/salescountlast30days", sales.getSalesCountLast30Days);
 
+// Import Sales
+router.post("/import", sales.importSales);
+
 module.exports = router;
 
 // http://localhost:4000/api/sales/add POST
