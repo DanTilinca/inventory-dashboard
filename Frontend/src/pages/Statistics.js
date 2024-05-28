@@ -1,187 +1,276 @@
-import React from 'react';
-import { PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import React, { useEffect, useState } from "react";
+import Chart from "react-apexcharts";
+import { Doughnut } from "react-chartjs-2";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+import 'tailwindcss/tailwind.css';
 
-const dataTopStores = [
-  { name: 'Store 1', value: 400 },
-  { name: 'Store 2', value: 300 },
-  { name: 'Store 3', value: 300 },
-  { name: 'Store 4', value: 200 },
-  { name: 'Store 5', value: 278 },
-];
+ChartJS.register(ArcElement, Tooltip, Legend);
 
-const dataTopProductsBySales = [
-  { name: 'Product 1', value: 2400 },
-  { name: 'Product 2', value: 4567 },
-  { name: 'Product 3', value: 1398 },
-  { name: 'Product 4', value: 9800 },
-  { name: 'Product 5', value: 3908 },
-];
+function Statistics() {
+  const [topProductsBySales, setTopProductsBySales] = useState({
+    options: {
+      chart: {
+        id: "top-products-sales",
+      },
+      xaxis: {
+        categories: [],
+      },
+    },
+    series: [
+      {
+        name: "Sales",
+        data: [],
+      },
+    ],
+  });
 
-const dataTopProductsByStock = [
-  { name: 'Product A', value: 3000 },
-  { name: 'Product B', value: 2000 },
-  { name: 'Product C', value: 2780 },
-  { name: 'Product D', value: 1890 },
-  { name: 'Product E', value: 2390 },
-];
+  const [topProductsByStock, setTopProductsByStock] = useState({
+    options: {
+      chart: {
+        id: "top-products-stock",
+      },
+      xaxis: {
+        categories: [],
+      },
+    },
+    series: [
+      {
+        name: "Stock",
+        data: [],
+      },
+    ],
+  });
 
-const stockStatusData = [
-  { name: 'Product 1', inStock: 400, lowStock: 300, outOfStock: 200 },
-  { name: 'Product 2', inStock: 300, lowStock: 200, outOfStock: 100 },
-  { name: 'Product 3', inStock: 200, lowStock: 300, outOfStock: 400 },
-  { name: 'Product 4', inStock: 278, lowStock: 189, outOfStock: 123 },
-  { name: 'Product 5', inStock: 189, lowStock: 200, outOfStock: 300 },
-];
+  const [stockStatus, setStockStatus] = useState({
+    labels: ["Out of Stock", "Low Stock", "In Stock"],
+    datasets: [
+      {
+        data: [0, 0, 0],
+        backgroundColor: ["#FF6384", "#FFCE56", "#36A2EB"],
+        hoverBackgroundColor: ["#FF6384", "#FFCE56", "#36A2EB"],
+      },
+    ],
+  });
 
-const dataTopStoresByProfit = [
-  { name: 'Store 1', profit: 1500 },
-  { name: 'Store 2', profit: 1200 },
-  { name: 'Store 3', profit: 1000 },
-  { name: 'Store 4', profit: 800 },
-  { name: 'Store 5', profit: 600 },
-];
+  const [salesLast12Months, setSalesLast12Months] = useState({
+    options: {
+      chart: {
+        id: "sales-last-12-months",
+      },
+      xaxis: {
+        categories: getLast12Months(),
+      },
+    },
+    series: [
+      {
+        name: "Sales",
+        data: [],
+      },
+    ],
+  });
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#FF6384'];
-const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
-  const RADIAN = Math.PI / 180;
-  const radius = 50 + innerRadius + (outerRadius - innerRadius);
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  const [purchasesLast12Months, setPurchasesLast12Months] = useState({
+    options: {
+      chart: {
+        id: "purchases-last-12-months",
+      },
+      xaxis: {
+        categories: getLast12Months(),
+      },
+    },
+    series: [
+      {
+        name: "Purchases",
+        data: [],
+      },
+    ],
+  });
+
+  const [spentLast12Months, setSpentLast12Months] = useState(0);
+  const [earnedLast12Months, setEarnedLast12Months] = useState(0);
+  const [profitLast12Months, setProfitLast12Months] = useState(0);
+
+  useEffect(() => {
+    // Fetch and set data for the charts and information fields
+    fetchTopProductsBySalesData();
+    fetchTopProductsByStockData();
+    fetchStockStatusData();
+    fetchSalesLast12MonthsData();
+    fetchPurchasesLast12MonthsData();
+    fetchSpentLast12Months();
+    fetchEarnedLast12Months();
+    calculateProfitLast12Months();
+  }, []);
+
+  const fetchTopProductsBySalesData = () => {
+    // Mock data for top products by sales
+    setTopProductsBySales({
+      options: {
+        ...topProductsBySales.options,
+        xaxis: {
+          categories: ["Product 1", "Product 2", "Product 3", "Product 4", "Product 5"],
+        },
+      },
+      series: [
+        {
+          name: "Sales",
+          data: [1000, 900, 800, 700, 600],
+        },
+      ],
+    });
+  };
+
+  const fetchTopProductsByStockData = () => {
+    // Mock data for top products by stock
+    setTopProductsByStock({
+      options: {
+        ...topProductsByStock.options,
+        xaxis: {
+          categories: ["Product A", "Product B", "Product C", "Product D", "Product E"],
+        },
+      },
+      series: [
+        {
+          name: "Stock",
+          data: [150, 120, 110, 100, 90],
+        },
+      ],
+    });
+  };
+
+  const fetchStockStatusData = () => {
+    // Mock data for stock status
+    setStockStatus({
+      labels: ["Out of Stock", "Low Stock", "In Stock"],
+      datasets: [
+        {
+          data: [5, 10, 50],
+          backgroundColor: ["#FF6384", "#FFCE56", "#36A2EB"],
+          hoverBackgroundColor: ["#FF6384", "#FFCE56", "#36A2EB"],
+        },
+      ],
+    });
+  };
+
+  const fetchSalesLast12MonthsData = () => {
+    // Mock data for sales last 12 months
+    setSalesLast12Months({
+      options: {
+        ...salesLast12Months.options,
+        xaxis: {
+          categories: getLast12Months(),
+        },
+      },
+      series: [
+        {
+          name: "Sales",
+          data: [5000, 4800, 4600, 4500, 4700, 4900, 5200, 5300, 5500, 5700, 5900, 6000],
+        },
+      ],
+    });
+  };
+
+  const fetchPurchasesLast12MonthsData = () => {
+    // Mock data for purchases last 12 months
+    setPurchasesLast12Months({
+      options: {
+        ...purchasesLast12Months.options,
+        xaxis: {
+          categories: getLast12Months(),
+        },
+      },
+      series: [
+        {
+          name: "Purchases",
+          data: [4000, 4200, 4400, 4300, 4100, 4000, 3800, 3900, 4100, 4200, 4300, 4500],
+        },
+      ],
+    });
+  };
+
+  const fetchSpentLast12Months = () => {
+    // Mock data for spent last 12 months
+    setSpentLast12Months(60000);
+  };
+
+  const fetchEarnedLast12Months = () => {
+    // Mock data for earned last 12 months
+    setEarnedLast12Months(120000);
+  };
+
+  const calculateProfitLast12Months = () => {
+    // Calculate profit last 12 months
+    setProfitLast12Months(earnedLast12Months - spentLast12Months);
+  };
+
+  function getLast12Months() {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const currentMonth = new Date().getMonth();
+    const last12Months = [];
+
+    for (let i = 0; i < 12; i++) {
+      last12Months.unshift(months[(currentMonth - i + 12) % 12]);
+    }
+
+    return last12Months;
+  }
 
   return (
-    <text
-      x={x}
-      y={y}
-      fill="black"
-      textAnchor={x > cx ? 'start' : 'end'}
-      dominantBaseline="central"
-    >
-      {`${(percent * 100).toFixed(0)}%`}
-    </text>
-  );
-};
-
-const Statistics = () => {
-  return (
-    <div className="flex flex-col min-h-screen p-8">
-      {/* Bara de sus fixată */}
-      <div className="bg-gray-800 text-white p-2 fixed top-0 left-0 w-full z-50">
-        <p>Most sold item is: <strong>Product XYZ</strong></p>
-        <p>Most sold category is: <strong>Category A</strong></p>
+    <div className="col-span-10 p-6 bg-gray-100 min-h-screen">
+      <h1 className="text-3xl font-bold mb-6">Statistics</h1>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        {/* Spent Last 12 Months */}
+        <div className="bg-white p-4 rounded-lg shadow-md col-span-1">
+          <h2 className="text-lg font-semibold mb-2">Spent Last 12 Months</h2>
+          <p className="text-2xl font-medium text-gray-900">${spentLast12Months}</p>
+        </div>
+        
+        {/* Earned Last 12 Months */}
+        <div className="bg-white p-4 rounded-lg shadow-md col-span-1">
+          <h2 className="text-lg font-semibold mb-2">Earned Last 12 Months</h2>
+          <p className="text-2xl font-medium text-gray-900">${earnedLast12Months}</p>
+        </div>
+        
+        {/* Profit Last 12 Months */}
+        <div className="bg-white p-4 rounded-lg shadow-md col-span-1">
+          <h2 className="text-lg font-semibold mb-2">Profit Last 12 Months</h2>
+          <p className="text-2xl font-medium text-gray-900">${profitLast12Months}</p>
+        </div>
       </div>
-      
-      <div className="flex justify-between mb-8">
-        <div>
-          <h2 className="text-xl font-bold mb-2 chart-title">Top 5 Stores by Sales</h2>
-          <PieChart width={400} height={400}>
-            <Pie
-              data={dataTopStores}
-              cx={150}
-              cy={150}
-              labelLine={false}
-              label={renderCustomizedLabel}
-              outerRadius={100}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {dataTopStores.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip />
-            <Legend />
-          </PieChart>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        {/* Top 5 Products by Stock */}
+        <div className="bg-white p-6 rounded-lg shadow-md col-span-1">
+          <h2 className="text-xl font-semibold mb-4">Top 5 Products by Stock</h2>
+          <Chart options={topProductsByStock.options} series={topProductsByStock.series} type="bar" height={350} />
         </div>
-        <div>
-          <h2 className="text-xl font-bold mb-2 chart-title">Top 5 Products by Sales</h2>
-          <PieChart width={400} height={400}>
-            <Pie
-              data={dataTopProductsBySales}
-              cx={150}
-              cy={150}
-              labelLine={false}
-              label={renderCustomizedLabel}
-              outerRadius={100}
-              fill="#82ca9d"
-              dataKey="value"
-            >
-              {dataTopProductsBySales.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip />
-            <Legend />
-          </PieChart>
+        
+        {/* Stock Status */}
+        <div className="bg-white p-6 rounded-lg shadow-md col-span-1">
+          <h2 className="text-xl font-semibold mb-4">Stock Status</h2>
+          <Doughnut data={stockStatus} />
         </div>
-        <div>
-          <h2 className="text-xl
-font-bold mb-2 chart-title">Top 5 Products by Stock</h2>
-<PieChart width={400} height={400}>
-  <Pie
-    data={dataTopProductsByStock}
-    cx={150}
-    cy={150}
-    labelLine={false}
-    label={renderCustomizedLabel}
-    outerRadius={100}
-    fill="#ffc658"
-    dataKey="value"
-  >
-    {dataTopProductsByStock.map((entry, index) => (
-      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-    ))}
-  </Pie>
-  <Tooltip />
-  <Legend />
-</PieChart>
-</div>
-{/* Adăugarea graficului pie pentru topul magazinelor după profit */}
-<div>
-<h2 className="text-xl font-bold mb-2 chart-title">Top 5 Stores by Profit</h2>
-<PieChart width={400} height={400}>
-  <Pie
-    data={dataTopStoresByProfit}
-    cx={150}
-    cy={150}
-    labelLine={false}
-    label={renderCustomizedLabel}
-    outerRadius={100}
-    fill="#FF6384"
-    dataKey="profit"
-  >
-    {dataTopStoresByProfit.map((entry, index) => (
-      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-    ))}
-  </Pie>
-  <Tooltip />
-  <Legend />
-</PieChart>
-</div>
-</div>
-
-{/* Plasarea graficului "Stock Status" în partea de mijloc jos */}
-<div className="flex justify-center">
-<div className="w-2/3">
-<h2 className="text-xl font-bold mb-2 chart-title">Stock Status</h2>
-<BarChart
-  width={800}
-  height={600}
-  data={stockStatusData}
-  margin={{ top: 5, right: 30, bottom: 5 }}
->
-  <CartesianGrid strokeDasharray="3 3" />
-  <XAxis dataKey="name" />
-  <YAxis />
-  <Tooltip />
-  <Legend />
-  <Bar dataKey="inStock" fill="#82ca9d" />
-  <Bar dataKey="lowStock" fill="#ffc658" />
-  <Bar dataKey="outOfStock" fill="#ff4d4d" />
-</BarChart>
-</div>
-</div>
-</div>
-);
-};
+        
+        {/* Top 5 Products by Sales */}
+        <div className="bg-white p-6 rounded-lg shadow-md col-span-1">
+          <h2 className="text-xl font-semibold mb-4">Top 5 Products by Sales</h2>
+          <Chart options={topProductsBySales.options} series={topProductsBySales.series} type="bar" height={350} />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Sales Last 12 Months */}
+        <div className="bg-white p-6 rounded-lg shadow-md col-span-1 md:col-span-1">
+          <h2 className="text-xl font-semibold mb-4">Sales Last 12 Months</h2>
+          <Chart options={salesLast12Months.options} series={salesLast12Months.series} type="bar" height={350} />
+        </div>
+        
+        {/* Purchases Last 12 Months */}
+        <div className="bg-white p-6 rounded-lg shadow-md col-span-1 md:col-span-1">
+          <h2 className="text-xl font-semibold mb-4">Purchases Last 12 Months</h2>
+          <Chart options={purchasesLast12Months.options} series={purchasesLast12Months.series} type="bar" height={350} />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default Statistics;
