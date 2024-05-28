@@ -54,14 +54,28 @@ const StoresMap = () => {
                             <p>${fullAddress}</p>
                             <p>Category: ${category}</p>
                             <img src="${image}" alt="${name}" style="max-width: 100px; max-height: 100px; object-fit: cover;"/>
-                            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs">
+                            <button id="more-details" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs">
                               More details
+                            </button>
+                            <button id="get-directions" class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded text-xs">
+                              Get directions
                             </button>
                           </div>`,
               });
 
               marker.addListener("click", () => {
                 infoWindow.open(map, marker);
+
+                window.google.maps.event.addListener(infoWindow, 'domready', () => {
+                  document.getElementById('more-details').addEventListener('click', () => {
+                    window.location.href = `/store/details/${location.id}`;
+                  });
+
+                  document.getElementById('get-directions').addEventListener('click', () => {
+                    const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(fullAddress)}`;
+                    window.open(directionsUrl, '_blank');
+                  });
+                });
               });
             } else {
               console.error(
