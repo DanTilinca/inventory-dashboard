@@ -139,120 +139,84 @@ function Dashboard() {
   };
 
   return (
-    <>
-      <div className="grid grid-cols-1 col-span-12 lg:col-span-10 gap-6 md:grid-cols-3 lg:grid-cols-4 p-4">
+    <div className="col-span-10 p-6 bg-gray-100 min-h-screen">
+      <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         {/* Sales Section */}
-        <article className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-6">
-          <div>
-            <strong className="block text-sm font-medium text-gray-500">
-              Sales (Last 30 Days)
-            </strong>
-            <p>
-              <span className="text-xl font-medium text-gray-900">
-                Revenue: ${saleAmount}
-              </span>
-            </p>
-            <p>
-              <span className="text-xl font-medium text-gray-900">
-                Count: {salesCount}
-              </span>
-            </p>
-          </div>
-        </article>
-
-        {/* Purchases Section */}
-        <article className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-6">
-          <div>
-            <strong className="block text-sm font-medium text-gray-500">
-              Purchases (Last 30 Days)
-            </strong>
-            <p>
-              <span className="text-xl font-medium text-gray-900">
-                Amount: ${purchaseAmount}
-              </span>
-            </p>
-            <p>
-              <span className="text-xl font-medium text-gray-900">
-                Count: {purchaseCount}
-              </span>
-            </p>
-          </div>
-        </article>
-
-        <article className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-6">
-          <div>
-            <strong className="block text-sm font-medium text-gray-500">
-              Products in Inventory
-            </strong>
-            <p>
-              <span className="text-2xl font-medium text-gray-900">
-                {products.length}
-              </span>
-            </p>
-          </div>
-        </article>
-
-        <article className="flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-6">
-          <div>
-            <strong className="block text-sm font-medium text-gray-500">
-              Total Stores
-            </strong>
-            <p>
-              <span className="text-2xl font-medium text-gray-900">
-                {stores.length}
-              </span>
-            </p>
-          </div>
-        </article>
-
-        <div className="flex justify-around bg-white rounded-lg py-8 col-span-full justify-center">
-          <div>
-            <strong className="block text-sm font-medium text-gray-500 mb-2">
-              Revenue per Month (Last 12 Months)
-            </strong>
-            <Chart
-              options={chart.options}
-              series={chart.series}
-              type="bar"
-              width="500"
-            />
-          </div>
-          <div>
-            <strong className="block text-sm font-medium text-gray-500 mb-2">
-              Products by Category
-            </strong>
-            <Doughnut
-              data={{
-                labels: categoriesData.labels,
-                datasets: [
-                  {
-                    label: "Number of Products",
-                    data: categoriesData.data,
-                    backgroundColor: [
-                      "rgba(255, 99, 132, 0.2)",
-                      "rgba(54, 162, 235, 0.2)",
-                      "rgba(255, 206, 86, 0.2)",
-                      "rgba(75, 192, 192, 0.2)",
-                      "rgba(153, 102, 255, 0.2)",
-                      "rgba(255, 159, 64, 0.2)",
-                    ],
-                    borderColor: [
-                      "rgba(255, 99, 132, 1)",
-                      "rgba(54, 162, 235, 1)",
-                      "rgba(255, 206, 86, 1)",
-                      "rgba(75, 192, 192, 1)",
-                      "rgba(153, 102, 255, 1)",
-                      "rgba(255, 159, 64, 1)",
-                    ],
-                    borderWidth: 1,
-                  },
-                ],
-              }}
-            />
+        <div className="bg-white p-4 rounded-lg shadow-md col-span-1">
+          <h2 className="text-lg font-semibold mb-2">Sales (Last 30 Days)</h2>
+          <div className="text-xl font-medium text-gray-900">
+            <p>Revenue: ${saleAmount}</p>
+            <p>Count: {salesCount}</p>
           </div>
         </div>
+        
+        {/* Purchases Section */}
+        <div className="bg-white p-4 rounded-lg shadow-md col-span-1">
+          <h2 className="text-lg font-semibold mb-2">Purchases (Last 30 Days)</h2>
+          <div className="text-xl font-medium text-gray-900">
+            <p>Amount: ${purchaseAmount}</p>
+            <p>Count: {purchaseCount}</p>
+          </div>
+        </div>
+
+        {/* Products in Inventory */}
+        <div className="bg-white p-4 rounded-lg shadow-md col-span-1">
+          <h2 className="text-lg font-semibold mb-2">Products in Inventory</h2>
+          <p className="text-2xl font-medium text-gray-900">{products.length}</p>
+        </div>
+
+        {/* Total Stores */}
+        <div className="bg-white p-4 rounded-lg shadow-md col-span-1">
+          <h2 className="text-lg font-semibold mb-2">Total Stores</h2>
+          <p className="text-2xl font-medium text-gray-900">{stores.length}</p>
+        </div>
       </div>
-    </>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-md col-span-2">
+          <h2 className="text-xl font-semibold mb-4">Revenue per Month (Last 12 Months)</h2>
+          <Chart
+            options={chart.options}
+            series={chart.series}
+            type="bar"
+            width="100%"
+            height={400}
+          />
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md col-span-1">
+          <h2 className="text-xl font-semibold mb-4">Products per Category</h2>
+          <Doughnut
+            data={{
+              labels: categoriesData.labels,
+              datasets: [
+                {
+                  label: "Number of Products",
+                  data: categoriesData.data,
+                  backgroundColor: [
+                    "rgba(255, 99, 132, 0.2)",
+                    "rgba(54, 162, 235, 0.2)",
+                    "rgba(255, 206, 86, 0.2)",
+                    "rgba(75, 192, 192, 0.2)",
+                    "rgba(153, 102, 255, 0.2)",
+                    "rgba(255, 159, 64, 0.2)",
+                  ],
+                  borderColor: [
+                    "rgba(255, 99, 132, 1)",
+                    "rgba(54, 162, 235, 1)",
+                    "rgba(255, 206, 86, 1)",
+                    "rgba(75, 192, 192, 1)",
+                    "rgba(153, 102, 255, 1)",
+                    "rgba(255, 159, 64, 1)",
+                  ],
+                  borderWidth: 1,
+                },
+              ],
+            }}
+            height={400}
+          />
+        </div>
+      </div>
+    </div>
   );
 }
 
