@@ -18,6 +18,7 @@ function Register() {
   const [inviteCodeError, setInviteCodeError] = useState(false);
   const [emailError, setEmailError] = useState(false);
   const [phoneError, setPhoneError] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState([]);
   const [isFormValid, setIsFormValid] = useState(false);
 
   const isValidInviteCode = async (code) => {
@@ -42,6 +43,8 @@ function Register() {
       setEmailError(!validateEmail(e.target.value));
     } else if (e.target.name === "phoneNumber") {
       setPhoneError(!validatePhoneNumber(e.target.value));
+    } else if (e.target.name === "password") {
+      validatePassword(e.target.value);
     }
   };
 
@@ -53,6 +56,20 @@ function Register() {
   const validatePhoneNumber = (phoneNumber) => {
     const phonePattern = /^\d{10,14}$/;
     return phonePattern.test(phoneNumber);
+  };
+
+  const validatePassword = (password) => {
+    const errors = [];
+    if (password.length < 8) {
+      errors.push("Password must be at least 8 characters long.");
+    }
+    if (!/[A-Z]/.test(password)) {
+      errors.push("You must have at least one uppercase letter.");
+    }
+    if (!/[0-9]/.test(password)) {
+      errors.push("You must have at least one number.");
+    }
+    setPasswordErrors(errors);
   };
 
   const registerUser = async (e) => {
@@ -85,23 +102,27 @@ function Register() {
       form.password &&
       validatePhoneNumber(form.phoneNumber) &&
       form.role &&
-      (!isAdmin || inviteCode)
+      (!isAdmin || inviteCode) &&
+      passwordErrors.length === 0
     );
-  }, [form, inviteCode, isAdmin]);
+  }, [form, inviteCode, isAdmin, passwordErrors]);
 
   return (
     <>
       <div className="flex justify-center items-center h-screen" style={{ backgroundColor: "#6600FF" }}>
-        <div className="w-full max-w-md space-y-8 p-10 rounded-lg bg-white">
-          <div>
-            <img
-              className="mx-auto h-70 w-auto"
-              src="https://logolook.net/wp-content/uploads/2022/10/Nokia-Log%D0%BE.png"
-              alt="Nokia Logo"
-            />
-            <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-              Register your new account
-            </h2>
+        <div className="w-full max-w-2xl space-y-12 p-12 rounded-lg bg-white">
+          <div className="text-center">
+            <h1 className="text-6xl font-bold text-gray-900 drop-shadow-lg">
+              Stock Master
+            </h1>
+            <div className="flex items-center justify-center mt-4">
+              <span className="text-2xl text-gray-700">Powered by</span>
+              <img
+                className="ml-3 h-12 w-auto"
+                src="https://logolook.net/wp-content/uploads/2022/10/Nokia-Log%D0%BE.png"
+                alt="Nokia Logo"
+              />
+            </div>
           </div>
           <form className="mt-8 space-y-6" onSubmit={registerUser}>
             <div className="flex flex-col gap-4 -space-y-px rounded-md shadow-sm">
@@ -110,7 +131,7 @@ function Register() {
                   name="firstName"
                   type="text"
                   required
-                  className="relative block w-full rounded-t-md border-0 py-1.5 px-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  className="relative block w-full rounded-t-md border-0 py-3 px-4 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-lg sm:leading-6"
                   placeholder="First Name"
                   value={form.firstName}
                   onChange={handleInputChange}
@@ -119,7 +140,7 @@ function Register() {
                   name="lastName"
                   type="text"
                   required
-                  className="relative block w-full rounded-t-md border-0 py-1.5 px-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  className="relative block w-full rounded-t-md border-0 py-3 px-4 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-lg sm:leading-6"
                   placeholder="Last Name"
                   value={form.lastName}
                   onChange={handleInputChange}
@@ -132,9 +153,9 @@ function Register() {
                   type="email"
                   autoComplete="email"
                   required
-                  className={`relative block w-full rounded-t-md border-0 py-1.5 px-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset ${
+                  className={`relative block w-full rounded-t-md border-0 py-3 px-4 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset ${
                     emailError ? "focus:ring-red-600" : "focus:ring-indigo-600"
-                  } sm:text-sm sm:leading-6`}
+                  } text-lg sm:leading-6`}
                   placeholder="Email address"
                   value={form.email}
                   onChange={handleInputChange}
@@ -148,28 +169,35 @@ function Register() {
                   type="password"
                   autoComplete="current-password"
                   required
-                  className="relative block w-full rounded-md border-0 py-1.5 px-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  className="relative block w-full rounded-md border-0 py-3 px-4 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-lg sm:leading-6"
                   placeholder="Password"
                   value={form.password}
                   onChange={handleInputChange}
                 />
+                {passwordErrors.length > 0 && (
+                  <ul className="text-red-600 text-sm mt-2">
+                    {passwordErrors.map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
-                <div>
-                  <input
-                    name="phoneNumber"
-                    type="tel"
-                    autoComplete="tel"
-                    pattern="\d{10,14}"
-                    required
-                    className={`relative block w-full rounded-md border-0 py-1.5 px-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset ${
-                      phoneError ? "focus:ring-red-600" : "focus:ring-indigo-600"
-                    } sm:text-sm sm:leading-6`}
-                    placeholder="Phone Number"
-                    value={form.phoneNumber}
-                    onChange={handleInputChange}
-                  />
-                  {phoneError && <p className="text-red-600 text-sm">Invalid phone number.</p>}
-                </div>
+              <div>
+                <input
+                  name="phoneNumber"
+                  type="tel"
+                  autoComplete="tel"
+                  pattern="\d{10,14}"
+                  required
+                  className={`relative block w-full rounded-md border-0 py-3 px-4 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset ${
+                    phoneError ? "focus:ring-red-600" : "focus:ring-indigo-600"
+                  } text-lg sm:leading-6`}
+                  placeholder="Phone Number"
+                  value={form.phoneNumber}
+                  onChange={handleInputChange}
+                />
+                {phoneError && <p className="text-red-600 text-sm">Invalid phone number.</p>}
+              </div>
               <div className="flex items-center gap-4">
                 <input
                   type="radio"
@@ -177,12 +205,12 @@ function Register() {
                   name="role"
                   value="admin"
                   onChange={handleRoleChange}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-600"
+                  className="h-5 w-5 text-indigo-600 focus:ring-indigo-600"
                   required
                 />
                 <label
                   htmlFor="admin"
-                  className="block text-sm text-gray-900"
+                  className="block text-lg text-gray-900"
                 >
                   Admin
                 </label>
@@ -192,12 +220,12 @@ function Register() {
                   name="role"
                   value="customer"
                   onChange={handleRoleChange}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-600"
+                  className="h-5 w-5 text-indigo-600 focus:ring-indigo-600"
                   required
                 />
                 <label
                   htmlFor="customer"
-                  className="block text-sm text-gray-900"
+                  className="block text-lg text-gray-900"
                 >
                   Customer
                 </label>
@@ -207,9 +235,9 @@ function Register() {
                   <input
                     type="text"
                     placeholder="Enter invite code"
-                    className={`relative block w-full rounded-md border-0 py-1.5 px-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset ${
+                    className={`relative block w-full rounded-md border-0 py-3 px-4 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset ${
                       inviteCodeError ? "focus:ring-red-600" : "focus:ring-indigo-600"
-                    } sm:text-sm sm:leading-6`}
+                    } text-lg sm:leading-6`}
                     value={inviteCode}
                     onChange={handleInviteCodeChange}
                   />
@@ -221,7 +249,7 @@ function Register() {
             <div>
               <button
                 type="submit"
-                className={`group relative flex w-full justify-center rounded-md py-2 px-3 text-sm font-semibold text-white ${
+                className={`group relative flex w-full justify-center rounded-md py-3 px-4 text-lg font-semibold text-white ${
                   isFormValid ? "bg-indigo-600 hover:bg-indigo-500" : "bg-gray-300 cursor-not-allowed"
                 } focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`}
                 disabled={!isFormValid}
@@ -229,7 +257,7 @@ function Register() {
               >
                 Sign up
               </button>
-              <p className="mt-2 text-center text-sm text-gray-600">
+              <p className="mt-4 text-center text-lg text-gray-600">
                 Or{" "}
                 <span
                   className="font-medium text-indigo-600 hover:text-indigo-500"
