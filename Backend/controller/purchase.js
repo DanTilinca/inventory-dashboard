@@ -138,6 +138,55 @@ const deleteAllPurchases = async (req, res) => {
   }
 };
 
+// Get spent last 12 months
+const getSpentLast12Months = async (req, res) => {
+  try {
+    const date12MonthsAgo = new Date();
+    date12MonthsAgo.setMonth(date12MonthsAgo.getMonth() - 12);
+
+    const purchaseData = await Purchase.find({
+      PurchaseDate: { $gte: date12MonthsAgo },
+    });
+
+    const totalSpent = purchaseData.reduce((acc, purchase) => acc + purchase.TotalPurchaseAmount, 0);
+
+    res.status(200).json({ totalSpent });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+// Get purchases last 12 months
+const getPurchasesLast12Months = async (req, res) => {
+  try {
+    const date12MonthsAgo = new Date();
+    date12MonthsAgo.setMonth(date12MonthsAgo.getMonth() - 12);
+
+    const purchaseData = await Purchase.aggregate([
+      { $match: { PurchaseDate: { $gte: date12MonthsAgo } } },
+      {
+        $group: {
+          _id: { $month: "$PurchaseDate" },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id": 1 } }
+    ]);
+
+    const purchasesByMonth = Array(12).fill(0);
+    purchaseData.forEach((item) => {
+      purchasesByMonth[item._id - 1] = item.count;
+    });
+
+    res.status(200).json({ purchasesByMonth });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+
 module.exports = { 
   addPurchase, 
   getPurchaseData, 
@@ -145,4 +194,7 @@ module.exports = {
   getTotalPurchaseAmountLast30Days, 
   getPurchaseCountLast30Days, 
   importPurchases,
-  deleteAllPurchases};
+  deleteAllPurchases,
+  getSpentLast12Months,
+  getPurchasesLast12Months
+};

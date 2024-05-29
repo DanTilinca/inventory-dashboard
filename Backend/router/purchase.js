@@ -23,6 +23,15 @@ router.post("/import", purchase.importPurchases);
 // Delete All Purchases
 router.delete("/deleteAll", purchase.deleteAllPurchases);
 
+
+// Statistics Page //
+
+// Total spent last 12 months
+router.get('/spentLast12Months', purchase.getSpentLast12Months);
+
+// Number of purchases per month last 12 months
+router.get('/purchasesLast12Months', purchase.getPurchasesLast12Months);
+
 module.exports = router;
 
 // http://localhost:4000/api/purchase/add POST

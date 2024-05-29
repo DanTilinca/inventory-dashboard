@@ -91,116 +91,79 @@ function Statistics() {
   const [profitLast12Months, setProfitLast12Months] = useState(0);
 
   useEffect(() => {
-    // Fetch and set data for the charts and information fields
-    fetchTopProductsBySalesData();
     fetchTopProductsByStockData();
     fetchStockStatusData();
-    fetchSalesLast12MonthsData();
-    fetchPurchasesLast12MonthsData();
     fetchSpentLast12Months();
-    fetchEarnedLast12Months();
-    calculateProfitLast12Months();
+    fetchPurchasesLast12Months();
   }, []);
 
-  const fetchTopProductsBySalesData = () => {
-    // Mock data for top products by sales
-    setTopProductsBySales({
-      options: {
-        ...topProductsBySales.options,
-        xaxis: {
-          categories: ["Product 1", "Product 2", "Product 3", "Product 4", "Product 5"],
-        },
-      },
-      series: [
-        {
-          name: "Sales",
-          data: [1000, 900, 800, 700, 600],
-        },
-      ],
-    });
-  };
-
   const fetchTopProductsByStockData = () => {
-    // Mock data for top products by stock
-    setTopProductsByStock({
-      options: {
-        ...topProductsByStock.options,
-        xaxis: {
-          categories: ["Product A", "Product B", "Product C", "Product D", "Product E"],
-        },
-      },
-      series: [
-        {
-          name: "Stock",
-          data: [150, 120, 110, 100, 90],
-        },
-      ],
-    });
+    fetch(`http://localhost:4000/api/product/topProductsByStock`)
+      .then((response) => response.json())
+      .then((data) => {
+        setTopProductsByStock({
+          options: {
+            ...topProductsByStock.options,
+            xaxis: {
+              categories: data.map((item) => item.name),
+            },
+          },
+          series: [
+            {
+              name: "Stock",
+              data: data.map((item) => item.stock),
+            },
+          ],
+        });
+      })
+      .catch((err) => console.error('Failed to fetch top products by stock:', err));
   };
 
   const fetchStockStatusData = () => {
-    // Mock data for stock status
-    setStockStatus({
-      labels: ["Out of Stock", "Low Stock", "In Stock"],
-      datasets: [
-        {
-          data: [5, 10, 50],
-          backgroundColor: ["#FF6384", "#FFCE56", "#36A2EB"],
-          hoverBackgroundColor: ["#FF6384", "#FFCE56", "#36A2EB"],
-        },
-      ],
-    });
-  };
-
-  const fetchSalesLast12MonthsData = () => {
-    // Mock data for sales last 12 months
-    setSalesLast12Months({
-      options: {
-        ...salesLast12Months.options,
-        xaxis: {
-          categories: getLast12Months(),
-        },
-      },
-      series: [
-        {
-          name: "Sales",
-          data: [5000, 4800, 4600, 4500, 4700, 4900, 5200, 5300, 5500, 5700, 5900, 6000],
-        },
-      ],
-    });
-  };
-
-  const fetchPurchasesLast12MonthsData = () => {
-    // Mock data for purchases last 12 months
-    setPurchasesLast12Months({
-      options: {
-        ...purchasesLast12Months.options,
-        xaxis: {
-          categories: getLast12Months(),
-        },
-      },
-      series: [
-        {
-          name: "Purchases",
-          data: [4000, 4200, 4400, 4300, 4100, 4000, 3800, 3900, 4100, 4200, 4300, 4500],
-        },
-      ],
-    });
+    fetch(`http://localhost:4000/api/product/stockStatus`)
+      .then((response) => response.json())
+      .then((data) => {
+        setStockStatus({
+          labels: ["Out of Stock", "Low Stock", "In Stock"],
+          datasets: [
+            {
+              data: [data.outOfStock, data.lowStock, data.inStock],
+              backgroundColor: ["#FF6384", "#FFCE56", "#36A2EB"],
+              hoverBackgroundColor: ["#FF6384", "#FFCE56", "#36A2EB"],
+            },
+          ],
+        });
+      })
+      .catch((err) => console.error('Failed to fetch stock status:', err));
   };
 
   const fetchSpentLast12Months = () => {
-    // Mock data for spent last 12 months
-    setSpentLast12Months(60000);
+    fetch(`http://localhost:4000/api/purchase/spentLast12Months`)
+      .then((response) => response.json())
+      .then((data) => setSpentLast12Months(data.totalSpent))
+      .catch((err) => console.error('Failed to fetch spent last 12 months:', err));
   };
 
-  const fetchEarnedLast12Months = () => {
-    // Mock data for earned last 12 months
-    setEarnedLast12Months(120000);
-  };
-
-  const calculateProfitLast12Months = () => {
-    // Calculate profit last 12 months
-    setProfitLast12Months(earnedLast12Months - spentLast12Months);
+  const fetchPurchasesLast12Months = () => {
+    fetch(`http://localhost:4000/api/purchase/purchasesLast12Months`)
+      .then((response) => response.json())
+      .then((data) => {
+        setPurchasesLast12Months({
+          options: {
+            ...purchasesLast12Months.options,
+            xaxis: {
+              categories: getLast12Months(),
+            },
+          },
+          series: [
+            {
+              name: "Purchases",
+              data: data.purchasesByMonth,
+            },
+          ],
+        });
+      })
+      .catch((err) => console.error('Failed to fetch purchases last 12 months:', err));
   };
 
   function getLast12Months() {
@@ -214,6 +177,10 @@ function Statistics() {
 
     return last12Months;
   }
+
+  useEffect(() => {
+    setProfitLast12Months(earnedLast12Months - spentLast12Months);
+  }, [earnedLast12Months, spentLast12Months]);
 
   return (
     <div className="col-span-10 p-6 bg-gray-100 min-h-screen">

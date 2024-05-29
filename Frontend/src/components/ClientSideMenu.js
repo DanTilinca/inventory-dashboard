@@ -50,15 +50,7 @@ function ClientSideMenu() {
             className="flex items-center gap-3 rounded-lg hover:bg-blue-100 px-4 py-3 text-gray-600 hover:text-blue-800 transition duration-150 ease-in-out"
           >
             <MapIcon />
-            <span className="text-base font-semibold">Map</span>
-          </Link>
-
-          <Link
-            to="/client/reports"
-            className="flex items-center gap-3 rounded-lg hover:bg-blue-100 px-4 py-3 text-gray-600 hover:text-blue-800 transition duration-150 ease-in-out"
-          >
-            <AssessmentIcon />
-            <span className="text-base font-semibold">Reports</span>
+            <span className="text-base font-semibold">Stores Map</span>
           </Link>
         </nav>
       </div>

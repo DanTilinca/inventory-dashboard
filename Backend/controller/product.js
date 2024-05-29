@@ -97,6 +97,35 @@ const deleteAllProducts = async (req, res) => {
   }
 };
 
+// Get Stock Status
+const getStockStatus = async (req, res) => {
+  try {
+    const outOfStock = await Product.countDocuments({ stock: 0 });
+    const lowStock = await Product.countDocuments({ stock: { $gt: 0, $lte: 50 } });
+    const inStock = await Product.countDocuments({ stock: { $gt: 50 } });
+
+    res.json({ outOfStock, lowStock, inStock });
+  } catch (error) {
+    console.error("Error fetching stock status:", error);
+    res.status(500).send({ error: "Failed to fetch stock status" });
+  }
+};
+
+// Get Top 5 Products by Stock
+const getTopProductsByStock = async (req, res) => {
+  try {
+    const topProducts = await Product.find({})
+      .sort({ stock: -1 })
+      .limit(5)
+      .select("name stock");
+
+    res.json(topProducts);
+  } catch (error) {
+    console.error("Error fetching top products by stock:", error);
+    res.status(500).send({ error: "Failed to fetch top products by stock" });
+  }
+};
+
 module.exports = {
   addProduct,
   getAllProducts,
@@ -104,5 +133,7 @@ module.exports = {
   updateSelectedProduct,
   searchProduct,
   importProducts,
-  deleteAllProducts
+  deleteAllProducts,
+  getStockStatus,
+  getTopProductsByStock
 };
