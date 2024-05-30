@@ -143,7 +143,7 @@ function Statistics() {
   const fetchSpentLast12Months = () => {
     fetch(`http://localhost:4000/api/purchase/spentLast12Months`)
       .then((response) => response.json())
-      .then((data) => setSpentLast12Months(data.totalSpent))
+      .then((data) => setSpentLast12Months(Math.round(data.totalSpent)))
       .catch((err) => console.error('Failed to fetch spent last 12 months:', err));
   };
 
@@ -173,7 +173,7 @@ function Statistics() {
   const fetchEarnedLast12Months = () => {
     fetch(`http://localhost:4000/api/sales/get/earnedlast12months`)
       .then((response) => response.json())
-      .then((data) => setEarnedLast12Months(data.totalEarned))
+      .then((data) => setEarnedLast12Months(Math.round(data.totalEarned)))
       .catch((err) => console.error('Failed to fetch earned last 12 months:', err));
   };
 
@@ -192,7 +192,7 @@ function Statistics() {
           series: [
             {
               name: "Sales",
-              data: salesData,
+              data: salesData.map(val => Math.round(val)),
             },
           ],
         });
@@ -246,7 +246,7 @@ function Statistics() {
   }
 
   useEffect(() => {
-    setProfitLast12Months(earnedLast12Months - spentLast12Months);
+    setProfitLast12Months(Math.round(earnedLast12Months - spentLast12Months));
   }, [earnedLast12Months, spentLast12Months]);
 
   return (

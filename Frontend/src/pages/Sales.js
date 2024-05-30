@@ -79,7 +79,7 @@ function Sales() {
     { headerName: "Store Name", field: "StoreID.name", sortable: true, filter: true },
     { headerName: "Stock Sold", field: "StockSold", sortable: true, filter: 'agNumberColumnFilter' },
     { headerName: "Sales Date", field: "SaleDate", sortable: true, filter: 'agDateColumnFilter', valueFormatter: params => new Date(params.value).toLocaleDateString() },
-    { headerName: "Total Sale Amount", field: "TotalSaleAmount", sortable: true, filter: 'agNumberColumnFilter' },
+    { headerName: "Total Sale Amount", field: "TotalSaleAmount", sortable: true, filter: 'agNumberColumnFilter', valueFormatter: params => Math.round(params.value) },
     { headerName: "Price per Unit", field: "pricePerUnit", valueGetter: params => {
         if (params.data.TotalSaleAmount && params.data.StockSold) {
           return (params.data.TotalSaleAmount / params.data.StockSold).toFixed(2);
@@ -105,7 +105,7 @@ function Sales() {
     storeName: s.StoreID.name,
     stockSold: s.StockSold,
     saleDate: new Date(s.SaleDate).toLocaleDateString(),
-    totalSaleAmount: s.TotalSaleAmount,
+    totalSaleAmount: Math.round(s.TotalSaleAmount),
     pricePerUnit: (s.TotalSaleAmount / s.StockSold).toFixed(2)
   }));
 

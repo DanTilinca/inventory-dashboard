@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, Fragment } from "react";
 import ViewCart from "../components/ViewCart"; // Import the new component for the modal
 import AuthContext from "../AuthContext";
 
-const categories = ["All", "Electronics", "Groceries", "Healthcare", "Others"];
+const categories = ["All", "Electronics", "Groceries", "Healthcare", "Clothing", "Beauty", "Toys", "Sports", "Home", "Books", "Automotive"];
 const itemsPerPageOptions = [5, 10, 20, 50];
 
 function ProductsClient() {

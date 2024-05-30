@@ -23,6 +23,13 @@ function Dashboard() {
       xaxis: {
         categories: getLast12Months(), // Dynamic categories based on the current month
       },
+      yaxis: {
+        labels: {
+          formatter: function (val) {
+            return Math.round(val);
+          },
+        },
+      },
     },
     series: [
       {
@@ -52,7 +59,7 @@ function Dashboard() {
       series: [
         {
           name: "Monthly Sales Amount",
-          data: [...salesData],
+          data: salesData.map(val => Math.round(val)),
         },
       ],
     });
@@ -88,28 +95,28 @@ function Dashboard() {
   const fetchTotalSaleAmountLast30Days = () => {
     fetch(`http://localhost:4000/api/sales/get/totalsaleamountlast30days`)
       .then((response) => response.json())
-      .then((datas) => setSaleAmount(datas.totalSaleAmount));
+      .then((datas) => setSaleAmount(Math.round(datas.totalSaleAmount)));
   };
 
   // Fetching total purchase amount in the last 30 days
   const fetchTotalPurchaseAmountLast30Days = () => {
     fetch(`http://localhost:4000/api/purchase/get/totalpurchaseamountlast30days`)
       .then((response) => response.json())
-      .then((datas) => setPurchaseAmount(datas.totalPurchaseAmount));
+      .then((datas) => setPurchaseAmount(Math.round(datas.totalPurchaseAmount)));
   };
 
   // Fetching number of sales in the last 30 days
   const fetchSalesCountLast30Days = () => {
     fetch(`http://localhost:4000/api/sales/get/salescountlast30days`)
       .then((response) => response.json())
-      .then((datas) => setSalesCount(datas.salesCount));
+      .then((datas) => setSalesCount(Math.round(datas.salesCount)));
   };
 
   // Fetching number of purchases in the last 30 days
   const fetchPurchaseCountLast30Days = () => {
     fetch(`http://localhost:4000/api/purchase/get/purchasecountlast30days`)
       .then((response) => response.json())
-      .then((datas) => setPurchaseCount(datas.purchaseCount));
+      .then((datas) => setPurchaseCount(Math.round(datas.purchaseCount)));
   };
 
   // Fetching all stores data
@@ -146,8 +153,8 @@ function Dashboard() {
         <div className="bg-white p-4 rounded-lg shadow-md col-span-1">
           <h2 className="text-lg font-semibold mb-2">Sales (Last 30 Days)</h2>
           <div className="text-xl font-medium text-gray-900">
-            <p>Revenue: ${saleAmount}</p>
-            <p>Count: {salesCount}</p>
+            <p>Revenue: ${Math.round(saleAmount)}</p>
+            <p>Count: {Math.round(salesCount)}</p>
           </div>
         </div>
         
@@ -155,8 +162,8 @@ function Dashboard() {
         <div className="bg-white p-4 rounded-lg shadow-md col-span-1">
           <h2 className="text-lg font-semibold mb-2">Purchases (Last 30 Days)</h2>
           <div className="text-xl font-medium text-gray-900">
-            <p>Amount: ${purchaseAmount}</p>
-            <p>Count: {purchaseCount}</p>
+            <p>Amount: ${Math.round(purchaseAmount)}</p>
+            <p>Count: {Math.round(purchaseCount)}</p>
           </div>
         </div>
 
