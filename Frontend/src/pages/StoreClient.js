@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useContext } from "react";
-import AddStore from "../components/AddStore";
 import StoreDetails from "../components/StoreDetails";
 import AuthContext from "../AuthContext";
 
-function Store() {
-  const [showModal, setShowModal] = useState(false);
+function StoreClient() {
   const [stores, setAllStores] = useState([]);
   const [filteredStores, setFilteredStores] = useState([]);
   const [selectedStore, setSelectedStore] = useState(null);
@@ -24,10 +22,6 @@ function Store() {
         setAllStores(data);
         setFilteredStores(data);
       });
-  };
-
-  const modalSetting = () => {
-    setShowModal(!showModal);
   };
 
   const showDetailsModal = (store) => {
@@ -57,14 +51,7 @@ function Store() {
             placeholder="Search by store name or city"
             className="p-2 border rounded w-1/3"
           />
-          <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold p-2 text-xs rounded"
-            onClick={modalSetting}
-          >
-            Add Store
-          </button>
         </div>
-        {showModal && <AddStore />}
         {selectedStore && (
           <StoreDetails
             isOpen={true}
@@ -112,4 +99,4 @@ function Store() {
   );
 }
 
-export default Store;
+export default StoreClient;

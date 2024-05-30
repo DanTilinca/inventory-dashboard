@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import StoreDetails from "../components/StoreDetails";
 
 const StoresMap = () => {
   const [map, setMap] = useState(null);
   const [stores, setStores] = useState([]);
+  const [selectedStore, setSelectedStore] = useState(null);
 
   useEffect(() => {
     // Load Google Maps API
@@ -54,14 +56,28 @@ const StoresMap = () => {
                             <p>${fullAddress}</p>
                             <p>Category: ${category}</p>
                             <img src="${image}" alt="${name}" style="max-width: 100px; max-height: 100px; object-fit: cover;"/>
-                            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs">
+                            <button id="more-details" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs">
                               More details
+                            </button>
+                            <button id="get-directions" class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded text-xs">
+                              Get directions
                             </button>
                           </div>`,
               });
 
               marker.addListener("click", () => {
                 infoWindow.open(map, marker);
+
+                window.google.maps.event.addListener(infoWindow, 'domready', () => {
+                  document.getElementById('more-details').addEventListener('click', () => {
+                    setSelectedStore(location);
+                  });
+
+                  document.getElementById('get-directions').addEventListener('click', () => {
+                    const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(fullAddress)}`;
+                    window.open(directionsUrl, '_blank');
+                  });
+                });
               });
             } else {
               console.error(
@@ -97,6 +113,13 @@ const StoresMap = () => {
         id="map"
         className="w-[80vw] h-[80vh] ml-auto border border-gray-300 rounded-lg"
       ></div>
+      {selectedStore && (
+        <StoreDetails
+          isOpen={true}
+          store={selectedStore}
+          onClose={() => setSelectedStore(null)}
+        />
+      )}
     </div>
   );
 };

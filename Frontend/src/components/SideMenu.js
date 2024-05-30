@@ -11,7 +11,7 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 
 function SideMenu() {
   return (
-    <div className="h-full flex flex-col justify-between bg-gray-50 text-gray-700 hidden lg:flex">
+    <div className="h-full flex flex-col justify-between bg-gray-200 text-gray-700 hidden lg:flex">
       <div className="px-6 py-8">
         <nav aria-label="Main Nav" className="mt-6 flex flex-col space-y-2">
           <Link

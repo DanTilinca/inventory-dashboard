@@ -170,7 +170,7 @@ const importSales = async (req, res) => {
         ProductID: productInfo.id,
         StoreID: storeID,
         StockSold: stockSold,
-        SaleDate: sale.SaleDate,
+        SaleDate: new Date(sale.SaleDate),
         TotalSaleAmount: sale.TotalSaleAmount * (stockSold / sale.StockSold), // Adjust total sale amount
         PricePerUnit: sale.PricePerUnit
       };
@@ -201,6 +201,90 @@ const deleteAllSales = async (req, res) => {
   }
 };
 
+// Get earned last 12 months
+const getEarnedLast12Months = async (req, res) => {
+  try {
+    const date12MonthsAgo = new Date();
+    date12MonthsAgo.setMonth(date12MonthsAgo.getMonth() - 12);
+
+    const salesData = await Sales.find({
+      SaleDate: { $gte: date12MonthsAgo },
+    });
+
+    const totalEarned = salesData.reduce((acc, sale) => acc + sale.TotalSaleAmount, 0);
+
+    res.status(200).json({ totalEarned });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+// Get sales last 12 months
+const getSalesLast12Months = async (req, res) => {
+  try {
+    const date12MonthsAgo = new Date();
+    date12MonthsAgo.setMonth(date12MonthsAgo.getMonth() - 12);
+
+    const salesData = await Sales.aggregate([
+      { $match: { SaleDate: { $gte: date12MonthsAgo } } },
+      {
+        $group: {
+          _id: { $month: "$SaleDate" },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id": 1 } }
+    ]);
+
+    const salesByMonth = Array(12).fill(0);
+    salesData.forEach((item) => {
+      salesByMonth[item._id - 1] = item.count;
+    });
+
+    res.status(200).json({ salesByMonth });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+// Get top 5 products by sales
+const getTopProductsBySales = async (req, res) => {
+  try {
+    const salesData = await Sales.aggregate([
+      {
+        $group: {
+          _id: "$ProductID",
+          totalSold: { $sum: "$StockSold" },
+        },
+      },
+      { $sort: { totalSold: -1 } },
+      { $limit: 5 },
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "_id",
+          as: "product",
+        },
+      },
+      { $unwind: "$product" },
+      {
+        $project: {
+          name: "$product.name",
+          totalSold: 1,
+        },
+      },
+    ]);
+
+    res.status(200).json(salesData);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 module.exports = {
   addSales,
   getMonthlySales,
@@ -209,5 +293,8 @@ module.exports = {
   getTotalSalesAmountLast30Days,
   getSalesCountLast30Days,
   importSales,
-  deleteAllSales
+  deleteAllSales,
+  getEarnedLast12Months,
+  getSalesLast12Months,
+  getTopProductsBySales
 };
