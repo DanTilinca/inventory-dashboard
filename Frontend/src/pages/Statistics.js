@@ -64,7 +64,7 @@ function Statistics() {
     series: [
       {
         name: "Sales",
-        data: [],
+        data: new Array(12).fill(0),
       },
     ],
   });
@@ -81,7 +81,7 @@ function Statistics() {
     series: [
       {
         name: "Purchases",
-        data: [],
+        data: new Array(12).fill(0),
       },
     ],
   });
@@ -95,6 +95,9 @@ function Statistics() {
     fetchStockStatusData();
     fetchSpentLast12Months();
     fetchPurchasesLast12Months();
+    fetchEarnedLast12Months();
+    fetchSalesLast12Months();
+    fetchTopProductsBySalesData();
   }, []);
 
   const fetchTopProductsByStockData = () => {
@@ -148,6 +151,7 @@ function Statistics() {
     fetch(`http://localhost:4000/api/purchase/purchasesLast12Months`)
       .then((response) => response.json())
       .then((data) => {
+        const purchasesData = mapDataToLast12Months(data.purchasesByMonth);
         setPurchasesLast12Months({
           options: {
             ...purchasesLast12Months.options,
@@ -158,12 +162,64 @@ function Statistics() {
           series: [
             {
               name: "Purchases",
-              data: data.purchasesByMonth,
+              data: purchasesData,
             },
           ],
         });
       })
       .catch((err) => console.error('Failed to fetch purchases last 12 months:', err));
+  };
+
+  const fetchEarnedLast12Months = () => {
+    fetch(`http://localhost:4000/api/sales/get/earnedlast12months`)
+      .then((response) => response.json())
+      .then((data) => setEarnedLast12Months(data.totalEarned))
+      .catch((err) => console.error('Failed to fetch earned last 12 months:', err));
+  };
+
+  const fetchSalesLast12Months = () => {
+    fetch(`http://localhost:4000/api/sales/get/saleslast12months`)
+      .then((response) => response.json())
+      .then((data) => {
+        const salesData = mapDataToLast12Months(data.salesByMonth);
+        setSalesLast12Months({
+          options: {
+            ...salesLast12Months.options,
+            xaxis: {
+              categories: getLast12Months(),
+            },
+          },
+          series: [
+            {
+              name: "Sales",
+              data: salesData,
+            },
+          ],
+        });
+      })
+      .catch((err) => console.error('Failed to fetch sales last 12 months:', err));
+  };
+
+  const fetchTopProductsBySalesData = () => {
+    fetch(`http://localhost:4000/api/sales/get/topproductsbysales`)
+      .then((response) => response.json())
+      .then((data) => {
+        setTopProductsBySales({
+          options: {
+            ...topProductsBySales.options,
+            xaxis: {
+              categories: data.map((item) => item.name),
+            },
+          },
+          series: [
+            {
+              name: "Sales",
+              data: data.map((item) => item.totalSold),
+            },
+          ],
+        });
+      })
+      .catch((err) => console.error('Failed to fetch top products by sales:', err));
   };
 
   function getLast12Months() {
@@ -176,6 +232,17 @@ function Statistics() {
     }
 
     return last12Months;
+  }
+
+  function mapDataToLast12Months(data) {
+    const last12Months = getLast12Months();
+    const mappedData = new Array(12).fill(0);
+    data.forEach((item, index) => {
+      const month = new Date().getMonth() - index;
+      const adjustedMonth = (month + 12) % 12;
+      mappedData[11 - index] = item;
+    });
+    return mappedData;
   }
 
   useEffect(() => {

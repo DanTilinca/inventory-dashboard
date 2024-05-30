@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import StoreDetails from "../components/StoreDetails";
 
-const StoresMap = () => {
+const StoresMapClient = () => {
   const [map, setMap] = useState(null);
   const [stores, setStores] = useState([]);
+  const [selectedStore, setSelectedStore] = useState(null);
 
   useEffect(() => {
     // Load Google Maps API
@@ -68,7 +70,7 @@ const StoresMap = () => {
 
                 window.google.maps.event.addListener(infoWindow, 'domready', () => {
                   document.getElementById('more-details').addEventListener('click', () => {
-                    window.location.href = `/store/details/${location.id}`;
+                    setSelectedStore(location);
                   });
 
                   document.getElementById('get-directions').addEventListener('click', () => {
@@ -111,8 +113,15 @@ const StoresMap = () => {
         id="map"
         className="w-[80vw] h-[80vh] ml-auto border border-gray-300 rounded-lg"
       ></div>
+      {selectedStore && (
+        <StoreDetails
+          isOpen={true}
+          store={selectedStore}
+          onClose={() => setSelectedStore(null)}
+        />
+      )}
     </div>
   );
 };
 
-export default StoresMap;
+export default StoresMapClient;

@@ -17,7 +17,7 @@ export default function ImportSales({ importSalesModalSetting, handlePageUpdate 
       headers.forEach((header, index) => {
         sale[header] = row[index];
       });
-      sale.userID = authContext.user; // Use userID to match the schema
+      sale.userID = authContext.user; // Ensure userID is set correctly
       sale.StockSold = Number(sale.StockSold); // Convert to number
       sale.TotalSaleAmount = Number(sale.TotalSaleAmount); // Convert to number
       sale.SaleDate = new Date(sale.SaleDate); // Convert to date
@@ -39,14 +39,17 @@ export default function ImportSales({ importSalesModalSetting, handlePageUpdate 
       .then((response) => response.json())
       .then((result) => {
         if (result.error) {
-          alert("Failed to import sales");
+          alert("Failed to import sales: " + result.error);
         } else {
           alert("Sales Imported Successfully");
           handlePageUpdate();
           importSalesModalSetting();
         }
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        console.error("Error importing sales:", err);
+        alert("An error occurred while importing sales");
+      });
   };
 
   return (

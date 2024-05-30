@@ -1,36 +1,27 @@
-import React, { useState, useEffect, useContext } from "react";
-import { CSVLink } from "react-csv"; // Import CSVLink
-import AddProduct from "../components/AddProduct";
-import UpdateProduct from "../components/UpdateProduct";
-import ImportProducts from "../components/ImportProducts"; // Import the new component
+import React, { useState, useEffect, useContext, Fragment } from "react";
+import ViewCart from "../components/ViewCart"; // Import the new component for the modal
 import AuthContext from "../AuthContext";
 
-const categories = ["All", "Electronics", "Groceries", "Healthcare", "Clothing", "Beauty", "Toys", "Sports", "Home", "Books", "Automotive"];
+const categories = ["All", "Electronics", "Groceries", "Healthcare", "Others"];
 const itemsPerPageOptions = [5, 10, 20, 50];
 
-function Inventory() {
-  const [showProductModal, setShowProductModal] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false); // State for import modal
-  const [updateProduct, setUpdateProduct] = useState([]);
+function ProductsClient() {
+  const [showCartModal, setShowCartModal] = useState(false);
   const [products, setAllProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [updatePage, setUpdatePage] = useState(true);
-  const [stores, setAllStores] = useState([]);
-  const [lowStockCount, setLowStockCount] = useState(0);
-  const [outOfStockCount, setOutOfStockCount] = useState(0);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "ascending" });
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [selectedQuantities, setSelectedQuantities] = useState({});
 
   const authContext = useContext(AuthContext);
 
   useEffect(() => {
     fetchProductsData();
-    fetchSalesData();
   }, [updatePage, selectedCategory, searchTerm, sortConfig, currentPage, itemsPerPage]);
 
   // Fetching Data of All Products
@@ -64,30 +55,8 @@ function Inventory() {
 
         setAllProducts(filteredData);
         updateFilteredProducts(filteredData);
-
-        // Calculate low and out of stock counts
-        let lowStock = 0;
-        let outOfStock = 0;
-        filteredData.forEach(product => {
-          if (product.stock > 0 && product.stock <= 50) {
-            lowStock++;
-          } else if (product.stock === 0) {
-            outOfStock++;
-          }
-        });
-        setLowStockCount(lowStock);
-        setOutOfStockCount(outOfStock);
       })
       .catch((err) => console.log(err));
-  };
-
-  // Fetching all stores data
-  const fetchSalesData = () => {
-    fetch(`http://localhost:4000/api/store/get`)
-      .then((response) => response.json())
-      .then((data) => {
-        setAllStores(data);
-      });
   };
 
   // Update filtered products for current page
@@ -97,34 +66,9 @@ function Inventory() {
     setFilteredProducts(data.slice(startIndex, endIndex));
   };
 
-  // Modal for Product ADD
-  const addProductModalSetting = () => {
-    setShowProductModal(!showProductModal);
-  };
-
-  // Modal for Product UPDATE
-  const updateProductModalSetting = (selectedProductData) => {
-    setUpdateProduct(selectedProductData);
-    setShowUpdateModal(!showUpdateModal);
-  };
-
-  // Modal for Import Products
-  const importProductModalSetting = () => {
-    setShowImportModal(!showImportModal);
-  };
-
-  // Delete item
-  const deleteItem = (id) => {
-    fetch(`http://localhost:4000/api/product/delete/${id}`)
-      .then((response) => response.json())
-      .then((data) => {
-        setUpdatePage(!updatePage);
-      });
-  };
-
-  // Handle Page Update
-  const handlePageUpdate = () => {
-    setUpdatePage(!updatePage);
+  // Modal for View Cart
+  const cartModalSetting = () => {
+    setShowCartModal(!showCartModal);
   };
 
   // Handle Search Term
@@ -164,90 +108,44 @@ function Inventory() {
     pageNumbers.push(i);
   }
 
-  // Prepare CSV data
-  const csvData = products.map(product => ({
-    name: product.name,
-    category: product.category,
-    stock: product.stock,
-    description: product.description
-  }));
+  // Handle Add to Cart
+  const handleAddToCart = (product, quantity) => {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const existingProductIndex = cart.findIndex(item => item._id === product._id);
+    if (existingProductIndex !== -1) {
+      cart[existingProductIndex].quantity += quantity;
+    } else {
+      cart.push({ ...product, quantity });
+    }
+    localStorage.setItem('cart', JSON.stringify(cart));
+    alert(`${quantity} ${product.name}(s) added to cart`);
+  };
+
+  // Validate stock quantity
+  const getMaxQuantity = (product) => {
+    return Array.from({ length: product.stock }, (_, i) => i + 1);
+  };
+
+  // Handle quantity selection change
+  const handleQuantityChange = (productId, quantity) => {
+    setSelectedQuantities(prevState => ({
+      ...prevState,
+      [productId]: quantity
+    }));
+  };
+
+  // Handle Page Update
+  const handlePageUpdate = () => {
+    setUpdatePage(!updatePage);
+  };
 
   return (
     <div className="col-span-12 lg:col-span-10 flex justify-center">
       <div className="flex flex-col gap-5 w-11/12">
-        <div className="bg-white rounded p-3">
-          <span className="font-semibold px-4">Overall Inventory</span>
-          <div className="flex flex-col md:flex-row justify-center items-center">
-            <div className="flex flex-col p-10 w-full md:w-3/12">
-              <span className="font-semibold text-blue-600 text-base">
-                Total Products
-              </span>
-              <span className="font-semibold text-gray-600 text-lg">
-                {products.length}
-              </span>
-            </div>
-            <div className="flex flex-col p-10 w-full md:w-3/12">
-              <span className="font-semibold text-orange-400 text-base">
-                Active Stores
-              </span>
-              <span className="font-semibold text-gray-600 text-lg">
-                {stores.length}
-              </span>
-            </div>
-            <div className="flex flex-col gap-3 p-10 w-full md:w-3/12 sm:border-y-2 md:border-x-2 md:border-y-0">
-              <span className="font-semibold text-purple-600 text-base">
-                Total Categories
-              </span>
-              <div className="flex gap-8">
-                <div className="flex flex-col">
-                  <span className="font-semibold text-gray-600 text-base">
-                    10
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col gap-3 p-10 w-full md:w-3/12 border-y-2 md:border-x-2 md:border-y-0">
-              <span className="font-semibold text-red-600 text-base">
-                Stocks Status
-              </span>
-              <div className="flex gap-8">
-                <div className="flex flex-col">
-                  <span className='font-semibold text-gray-600 text-base'>
-                    {lowStockCount}
-                  </span>
-                  <span className='font-thin text-gray-400 text-xs'>
-                    Low Stock
-                  </span>
-                </div>
-                <div className='flex flex-col'>
-                  <span className='font-semibold text-gray-600 text-base'>
-                    {outOfStockCount}
-                  </span>
-                  <span className='font-thin text-gray-400 text-xs'>
-                    Out of Stock
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {showProductModal && (
-          <AddProduct
-            addProductModalSetting={addProductModalSetting}
-            handlePageUpdate={handlePageUpdate}
-          />
-        )}
-        {showUpdateModal && (
-          <UpdateProduct
-            updateProductData={updateProduct}
-            updateModalSetting={updateProductModalSetting}
-            handlePageUpdate={handlePageUpdate}
-          />
-        )}
-        {showImportModal && (
-          <ImportProducts
-            importProductModalSetting={importProductModalSetting}
+        {showCartModal && (
+          <ViewCart
+            isOpen={showCartModal}
+            cartModalSetting={cartModalSetting}
             handlePageUpdate={handlePageUpdate}
           />
         )}
@@ -297,24 +195,10 @@ function Inventory() {
             <div className="flex gap-4">
               <button
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold p-2 text-xs rounded"
-                onClick={addProductModalSetting}
+                onClick={cartModalSetting}
               >
-                Add Product
+                View Cart
               </button>
-              <button
-                className="bg-green-500 hover:bg-green-700 text-white font-bold p-2 text-xs rounded"
-                onClick={importProductModalSetting}
-              >
-                Import Products
-              </button>
-              <CSVLink
-                data={csvData}
-                filename={"products_inventory.csv"}
-                className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold p-2 text-xs rounded"
-                target="_blank"
-              >
-                Export Products
-              </CSVLink>
             </div>
           </div>
           <table className="min-w-full divide-y-2 divide-gray-200 text-sm">
@@ -387,18 +271,29 @@ function Inventory() {
                       {stockStatus}
                     </td>
                     <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                      <button
-                        className="bg-green-700 text-white px-2 py-1 cursor-pointer rounded-lg font-semibold"
-                        onClick={() => updateProductModalSetting(element)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="bg-red-600 text-white px-2 py-1 ml-2 cursor-pointer rounded-lg font-semibold"
-                        onClick={() => deleteItem(element._id)}
-                      >
-                        Delete
-                      </button>
+                      <div className="flex items-center">
+                        <select
+                          className="border-2 rounded-md text-xs px-2 mr-2 w-16" // Increased width
+                          defaultValue={1}
+                          disabled={element.stock === 0}
+                          onChange={(e) => handleQuantityChange(element._id, parseInt(e.target.value))}
+                        >
+                          {getMaxQuantity(element).map((num) => (
+                            <option key={num} value={num}>
+                              {num}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          className={`px-2 py-1 cursor-pointer rounded-lg font-semibold ${
+                            element.stock === 0 ? "bg-gray-400" : "bg-blue-500 text-white"
+                          }`}
+                          onClick={() => handleAddToCart(element, selectedQuantities[element._id] || 1)}
+                          disabled={element.stock === 0}
+                        >
+                          Order
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -427,4 +322,4 @@ function Inventory() {
   );
 }
 
-export default Inventory;
+export default ProductsClient;

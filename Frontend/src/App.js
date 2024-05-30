@@ -11,6 +11,8 @@ import PurchaseDetails from "./pages/PurchaseDetails";
 import StatisticsPage from "./pages/Statistics";
 import HomePageClient from "./pages/HomePageClient";
 import StoresMapClient from "./pages/StoresMapClient";
+import StorePageClient from "./pages/StoreClient";
+import ProductsClient from "./pages/ProductsClient";
 import NoPageFound from "./pages/NoPageFound";
 import Layout from "./components/Layout";
 import LayoutClient from "./components/LayoutClient";
@@ -92,6 +94,8 @@ const App = () => {
           >
             <Route index element={<HomePageClient />} />
             <Route path="map" element={<StoresMapClient />} />
+            <Route path="products" element={<ProductsClient />} />
+            <Route path="stores" element={<StorePageClient />} />
           </Route>
           <Route path="*" element={<NoPageFound />} />
         </Routes>
