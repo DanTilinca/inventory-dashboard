@@ -1,61 +1,120 @@
-import React, { useContext } from "react";
-import AuthContext from "../AuthContext";
+import React from "react";
+import { Link } from "react-router-dom";
+import {
+  CubeIcon,
+  MapIcon,
+  BuildingStorefrontIcon,
+} from "@heroicons/react/24/outline";
 
 function HomePageClient() {
-  const authContext = useContext(AuthContext);
-  const localStorageData = JSON.parse(localStorage.getItem('user')) || {};
+  const localStorageData = JSON.parse(localStorage.getItem("user")) || {};
   const { firstName, lastName } = localStorageData;
 
+  const navigationCards = [
+    {
+      title: "Products",
+      description:
+        "Browse the product catalog, filter by category, and add items to cart with real-time stock visibility.",
+      to: "/client/products",
+      action: "Go to Products",
+      accent: "text-primary",
+      icon: CubeIcon,
+    },
+    {
+      title: "Stores",
+      description:
+        "Explore all available store locations, search by city or name, and open detailed store profiles.",
+      to: "/client/stores",
+      action: "Go to Stores",
+      accent: "text-success",
+      icon: BuildingStorefrontIcon,
+    },
+    {
+      title: "Map",
+      description:
+        "Locate stores on the map view, compare nearby locations, and navigate to the best option quickly.",
+      to: "/client/map",
+      action: "Go to Map",
+      accent: "text-warning",
+      icon: MapIcon,
+    },
+  ];
+
   return (
-    <div className="col-span-10 p-6 ml-auto">
-      <div className="bg-white shadow-md rounded-lg p-6">
-        <h1 className="text-3xl font-bold mb-6 text-center">
-          Hello {firstName} {lastName}! Welcome to Stock Master!
-        </h1>
-        <p className="text-lg mb-4 text-gray-700 text-center">
-          Stock Master is your one-stop solution for managing and viewing inventory, exploring stores, and finding the best routes to them.
-        </p>
-        <div className="flex justify-center mb-6">
-          <img
-            src="https://omniaccounts.co.za/wp-content/uploads/2021/06/The-Top-4-Business-Benefits-of-Stock-Control.jpg"
-            alt="Stock Control Benefits"
-            className="max-w-full h-auto rounded-lg"
-            style={{ maxWidth: '700px' }}
-          />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-blue-100 p-4 rounded-lg shadow-sm">
-            <h2 className="text-xl font-semibold mb-2 text-center">Products</h2>
-            <p className="text-gray-700 mb-2 text-center">
-              View our inventory of products and place orders for what you need. Search products, and sort them by category, name, or stock.
-            </p>
-            <div className="text-center">
-              <a href="/client/products" className="text-blue-500 hover:text-blue-700">
-                Go to Products
-              </a>
+    <div className="col-span-12 lg:col-span-10 min-h-screen bg-base-200/40 p-4 md:p-6 font-['Inter','Segoe_UI','Roboto',sans-serif]">
+      <div className="flex w-full flex-col gap-4">
+        <div className="rounded-xl border border-base-300 bg-base-100 p-5 shadow-sm">
+          <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 className="text-3xl font-bold text-base-content">
+                Hello {firstName || "User"} {lastName || ""}!
+              </h1>
+              <p className="mt-1 text-sm text-base-content/60">
+                Welcome to Stock Master Client Portal.
+              </p>
             </div>
           </div>
-          <div className="bg-green-100 p-4 rounded-lg shadow-sm">
-            <h2 className="text-xl font-semibold mb-2 text-center">Stores</h2>
-            <p className="text-gray-700 mb-2 text-center">
-              View information about our existing stores and search for specific stores.
-            </p>
-            <div className="text-center">
-              <a href="/client/stores" className="text-green-500 hover:text-green-700">
-                Go to Stores
-              </a>
+
+          <p className="mb-6 max-w-3xl text-sm leading-relaxed text-base-content/70">
+            Stock Master is your one-stop solution for viewing inventory, discovering stores, and planning the best
+            routes. Use the quick access modules below to navigate the client experience.
+          </p>
+
+          <div className="relative mb-6 overflow-hidden rounded-xl border border-base-300 bg-gradient-to-br from-primary/12 via-base-100 to-base-200/50 p-8 shadow-sm">
+            <div
+              className="pointer-events-none absolute inset-0 opacity-[0.35]"
+              style={{
+                backgroundImage:
+                  "linear-gradient(to right, hsl(var(--bc) / 0.06) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--bc) / 0.06) 1px, transparent 1px)",
+                backgroundSize: "28px 28px",
+              }}
+            />
+            <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-primary/20 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 -left-10 h-64 w-64 rounded-full bg-success/15 blur-3xl" />
+
+            <div className="relative max-w-2xl">
+              <p className="text-xs font-semibold uppercase tracking-wider text-base-content/50">Retail overview</p>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight text-base-content md:text-3xl">
+                Inventory, stores, and routes in one calm workspace.
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-base-content/70">
+                No external assets required—this hero uses layered gradients and a subtle grid texture for a clean,
+                enterprise-grade first impression.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-2">
+                <span className="badge badge-outline border-base-300 text-base-content/70">Live catalog</span>
+                <span className="badge badge-outline border-base-300 text-base-content/70">Store directory</span>
+                <span className="badge badge-outline border-base-300 text-base-content/70">Map navigation</span>
+              </div>
             </div>
           </div>
-          <div className="bg-yellow-100 p-4 rounded-lg shadow-sm">
-            <h2 className="text-xl font-semibold mb-2 text-center">Map</h2>
-            <p className="text-gray-700 mb-2 text-center">
-              View stores on a map, get directions to each store, and find out more information about them.
-            </p>
-            <div className="text-center">
-              <a href="/client/map" className="text-yellow-500 hover:text-yellow-700">
-                Go to Map
-              </a>
-            </div>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            {navigationCards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <div
+                  key={card.title}
+                  className="flex flex-col rounded-xl border border-base-300 bg-base-100 p-5 shadow-sm transition-shadow duration-200 hover:shadow-md"
+                >
+                  <div className="mb-3 flex items-center gap-2">
+                    <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                      <Icon className="h-5 w-5" aria-hidden />
+                    </div>
+                    <h2 className="text-lg font-semibold text-base-content">{card.title}</h2>
+                  </div>
+                  <p className="flex-1 text-sm leading-relaxed text-base-content/70">{card.description}</p>
+                  <div className="mt-5">
+                    <Link
+                      to={card.to}
+                      className={`btn btn-sm btn-ghost border border-base-200 font-semibold normal-case transition-colors duration-200 hover:bg-base-200 ${card.accent}`}
+                    >
+                      {card.action}
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

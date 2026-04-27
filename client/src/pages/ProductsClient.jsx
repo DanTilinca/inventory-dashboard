@@ -1,176 +1,225 @@
-import React, { useState, useEffect, useContext, Fragment } from "react";
-import ViewCart from "../components/ViewCart"; // Import the new component for the modal
-import AuthContext from "../AuthContext";
+import React, { useState, useEffect, useMemo } from "react";
+import { AgGridReact } from "ag-grid-react";
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-alpine.css";
+import "ag-grid-enterprise";
+import ViewCart from "../components/ViewCart";
 
 const categories = ["All", "Electronics", "Groceries", "Healthcare", "Clothing", "Beauty", "Toys", "Sports", "Home", "Books", "Automotive"];
-const itemsPerPageOptions = [5, 10, 20, 50];
+const itemsPerPageOptions = [10, 20, 50, 100];
 
 function ProductsClient() {
   const [showCartModal, setShowCartModal] = useState(false);
   const [products, setAllProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [updatePage, setUpdatePage] = useState(true);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "ascending" });
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [pageSize, setPageSize] = useState(20);
   const [selectedQuantities, setSelectedQuantities] = useState({});
-
-  const authContext = useContext(AuthContext);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     fetchProductsData();
-  }, [updatePage, selectedCategory, searchTerm, sortConfig, currentPage, itemsPerPage]);
+    syncCartCount();
+  }, [updatePage]);
 
-  // Fetching Data of All Products
+  const syncCartCount = () => {
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    const totalItems = cart.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+    setCartCount(totalItems);
+  };
+
   const fetchProductsData = () => {
     fetch(`http://localhost:4000/api/product/get`)
       .then((response) => response.json())
-      .then((data) => {
-        // Apply category filter
-        let filteredData = data;
-        if (selectedCategory !== "All") {
-          filteredData = data.filter(product => product.category === selectedCategory);
-        }
-
-        // Apply search filter
-        if (searchTerm) {
-          filteredData = filteredData.filter(product => product.name.toLowerCase().includes(searchTerm.toLowerCase()));
-        }
-
-        // Apply sorting
-        if (sortConfig.key) {
-          filteredData = filteredData.sort((a, b) => {
-            if (a[sortConfig.key] < b[sortConfig.key]) {
-              return sortConfig.direction === "ascending" ? -1 : 1;
-            }
-            if (a[sortConfig.key] > b[sortConfig.key]) {
-              return sortConfig.direction === "ascending" ? 1 : -1;
-            }
-            return 0;
-          });
-        }
-
-        setAllProducts(filteredData);
-        updateFilteredProducts(filteredData);
-      })
+      .then((data) => setAllProducts(data || []))
       .catch((err) => console.log(err));
   };
 
-  // Update filtered products for current page
-  const updateFilteredProducts = (data) => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    setFilteredProducts(data.slice(startIndex, endIndex));
-  };
-
-  // Modal for View Cart
   const cartModalSetting = () => {
     setShowCartModal(!showCartModal);
   };
 
-  // Handle Search Term
   const handleSearchTerm = (e) => {
     setSearchTerm(e.target.value);
   };
 
-  // Handle Category Change
   const handleCategoryChange = (e) => {
     setSelectedCategory(e.target.value);
   };
 
-  // Handle Sort
-  const handleSort = (key) => {
-    let direction = "ascending";
-    if (sortConfig.key === key && sortConfig.direction === "ascending") {
-      direction = "descending";
-    }
-    setSortConfig({ key, direction });
-  };
-
-  // Handle Items Per Page Change
-  const handleItemsPerPageChange = (e) => {
-    setItemsPerPage(Number(e.target.value));
-    setCurrentPage(1); // Reset to first page when items per page changes
-  };
-
-  // Handle Page Change
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
-
-  // Generate Page Numbers
-  const totalPages = Math.ceil(products.length / itemsPerPage);
-  const pageNumbers = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pageNumbers.push(i);
-  }
-
-  // Handle Add to Cart
   const handleAddToCart = (product, quantity) => {
-    const cart = JSON.parse(localStorage.getItem('cart')) || [];
-    const existingProductIndex = cart.findIndex(item => item._id === product._id);
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    const existingProductIndex = cart.findIndex((item) => item._id === product._id);
     if (existingProductIndex !== -1) {
       cart[existingProductIndex].quantity += quantity;
     } else {
       cart.push({ ...product, quantity });
     }
-    localStorage.setItem('cart', JSON.stringify(cart));
-    alert(`${quantity} ${product.name}(s) added to cart`);
+    localStorage.setItem("cart", JSON.stringify(cart));
+    syncCartCount();
   };
 
-  // Validate stock quantity
   const getMaxQuantity = (product) => {
-    return Array.from({ length: product.stock }, (_, i) => i + 1);
+    return Array.from({ length: Number(product.stock || 0) }, (_, i) => i + 1);
   };
 
-  // Handle quantity selection change
   const handleQuantityChange = (productId, quantity) => {
-    setSelectedQuantities(prevState => ({
+    const safeQuantity = Number.isNaN(Number(quantity)) ? 1 : Number(quantity);
+    setSelectedQuantities((prevState) => ({
       ...prevState,
-      [productId]: quantity
+      [productId]: safeQuantity < 1 ? 1 : safeQuantity,
     }));
   };
 
-  // Handle Page Update
   const handlePageUpdate = () => {
     setUpdatePage(!updatePage);
+    syncCartCount();
   };
 
+  const filteredProducts = useMemo(() => {
+    let data = [...products];
+
+    if (selectedCategory !== "All") {
+      data = data.filter((product) => product.category === selectedCategory);
+    }
+
+    if (searchTerm) {
+      data = data.filter((product) => (product.name || "").toLowerCase().includes(searchTerm.toLowerCase()));
+    }
+
+    return data;
+  }, [products, selectedCategory, searchTerm]);
+
+  const clientMetrics = useMemo(() => {
+    const availableProducts = filteredProducts.filter((product) => Number(product.stock || 0) > 0).length;
+    const lowStock = filteredProducts.filter((product) => Number(product.stock || 0) > 0 && Number(product.stock || 0) <= 50).length;
+    const categoriesCount = new Set(filteredProducts.map((product) => product.category).filter(Boolean)).size;
+
+    return {
+      total: filteredProducts.length,
+      available: availableProducts,
+      lowStock,
+      categoriesCount,
+    };
+  }, [filteredProducts]);
+
+  const defaultColDef = {
+    sortable: true,
+    filter: true,
+    resizable: true,
+    flex: 1,
+    minWidth: 130,
+  };
+
+  const columns = [
+    { headerName: "Category", field: "category" },
+    { headerName: "Product Name", field: "name", minWidth: 170 },
+    {
+      headerName: "Stock",
+      field: "stock",
+      type: "rightAligned",
+      filter: "agNumberColumnFilter",
+      valueFormatter: (params) => Number(params.value || 0).toLocaleString(),
+    },
+    { headerName: "Description", field: "description", minWidth: 240 },
+    {
+      headerName: "Availability",
+      field: "stock",
+      minWidth: 170,
+      cellRenderer: (params) => {
+        const stock = Number(params.value || 0);
+        const badgeClass = stock === 0 ? "badge-error" : stock <= 50 ? "badge-warning" : "badge-success";
+        const label = stock === 0 ? "Out of Stock" : stock <= 50 ? "Low Stock" : "In Stock";
+        return <span className={`badge ${badgeClass} badge-outline`}>{label}</span>;
+      },
+    },
+    {
+      headerName: "Add to Cart",
+      minWidth: 190,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params) => {
+        const stock = Number(params.data?.stock || 0);
+        return (
+          <div className="flex h-full items-center gap-2">
+            <input
+              type="number"
+              min={1}
+              max={stock}
+              step={1}
+              className="input input-bordered input-xs w-20 border-base-300 text-center"
+              value={selectedQuantities[params.data._id] || 1}
+              disabled={stock === 0}
+              onChange={(e) =>
+                handleQuantityChange(params.data._id, Math.min(stock, Number(e.target.value || 1)))
+              }
+            />
+            <button
+              className="btn btn-xs btn-primary text-white transition-colors duration-200 hover:bg-opacity-90 disabled:btn-disabled"
+              onClick={() => handleAddToCart(params.data, selectedQuantities[params.data._id] || 1)}
+              disabled={stock === 0}
+            >
+              Add
+            </button>
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
-    <div className="col-span-12 lg:col-span-10 flex justify-center">
-      <div className="flex flex-col gap-5 w-11/12">
+    <div className="col-span-12 lg:col-span-10 min-h-screen bg-base-200/40 p-4 md:p-6 font-['Inter','Segoe_UI','Roboto',sans-serif]">
+      <div className="flex w-full flex-col gap-4">
         {showCartModal && (
           <ViewCart
             isOpen={showCartModal}
             cartModalSetting={cartModalSetting}
             handlePageUpdate={handlePageUpdate}
+            onCartUpdated={syncCartCount}
           />
         )}
 
-        {/* Table  */}
-        <div className="overflow-x-auto rounded-lg border bg-white border-gray-200">
-          <div className="flex justify-between pt-5 pb-3 px-3">
-            <div className="flex gap-4 justify-center items-center">
-              <span className="font-bold">Products</span>
-              <div className="flex justify-center items-center px-2 border-2 rounded-md">
-                <img
-                  alt="search-icon"
-                  className="w-5 h-5"
-                  src={require("../assets/search-icon.png")}
-                />
-                <input
-                  className="border-none outline-none focus:border-none text-xs"
-                  type="text"
-                  placeholder="Search here"
-                  value={searchTerm}
-                  onChange={handleSearchTerm}
-                />
-              </div>
+        <div className="rounded-xl border border-base-300 bg-base-100 p-5 shadow-sm">
+          <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 className="text-3xl font-bold text-base-content">Products Catalog</h1>
+              <p className="text-sm text-base-content/60">
+                Browse inventory and place product orders directly to your cart.
+              </p>
+            </div>
+          </div>
+
+          <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-lg border border-base-200 bg-base-100 p-4">
+              <p className="text-xs uppercase tracking-wide text-base-content/50">Total Products</p>
+              <p className="mt-2 text-2xl font-bold text-base-content">{clientMetrics.total.toLocaleString()}</p>
+            </div>
+            <div className="rounded-lg border border-base-200 bg-base-100 p-4">
+              <p className="text-xs uppercase tracking-wide text-base-content/50">Available Products</p>
+              <p className="mt-2 text-2xl font-bold text-success">{clientMetrics.available.toLocaleString()}</p>
+            </div>
+            <div className="rounded-lg border border-base-200 bg-base-100 p-4">
+              <p className="text-xs uppercase tracking-wide text-base-content/50">Low Stock</p>
+              <p className="mt-2 text-2xl font-bold text-warning">{clientMetrics.lowStock.toLocaleString()}</p>
+            </div>
+            <div className="rounded-lg border border-base-200 bg-base-100 p-4">
+              <p className="text-xs uppercase tracking-wide text-base-content/50">Categories</p>
+              <p className="mt-2 text-2xl font-bold text-base-content">{clientMetrics.categoriesCount.toLocaleString()}</p>
+            </div>
+          </div>
+
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-base-200 bg-base-100 p-3">
+            <div className="flex flex-1 flex-wrap items-center gap-2">
+              <input
+                className="input input-bordered input-sm w-full max-w-xs border-base-300"
+                type="text"
+                placeholder="Search by product name"
+                value={searchTerm}
+                onChange={handleSearchTerm}
+              />
               <select
-                className="border-2 rounded-md text-xs px-2 w-auto"
+                className="select select-bordered select-sm border-base-300"
                 value={selectedCategory}
                 onChange={handleCategoryChange}
               >
@@ -181,9 +230,9 @@ function ProductsClient() {
                 ))}
               </select>
               <select
-                className="border-2 rounded-md text-xs px-2 w-40"
-                value={itemsPerPage}
-                onChange={handleItemsPerPageChange}
+                className="select select-bordered select-sm border-base-300"
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
               >
                 {itemsPerPageOptions.map((option, index) => (
                   <option key={index} value={option}>
@@ -192,129 +241,40 @@ function ProductsClient() {
                 ))}
               </select>
             </div>
-            <div className="flex gap-4">
+
+            <div className="flex flex-wrap gap-2">
               <button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold p-2 text-xs rounded"
+                className="btn btn-sm btn-outline border-base-300 transition-colors duration-200 hover:bg-base-200"
+                onClick={fetchProductsData}
+              >
+                Refresh
+              </button>
+              <button
+                className="btn btn-sm btn-primary transition-colors duration-200 hover:bg-opacity-90"
                 onClick={cartModalSetting}
               >
                 View Cart
+                {cartCount > 0 && <span className="badge badge-sm badge-neutral ml-1">{cartCount}</span>}
               </button>
             </div>
           </div>
-          <table className="min-w-full divide-y-2 divide-gray-200 text-sm">
-            <thead>
-              <tr>
-                <th
-                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
-                  onClick={() => handleSort("category")}
-                >
-                  Category
-                  {sortConfig.key === "category" && (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
-                </th>
-                <th
-                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
-                  onClick={() => handleSort("name")}
-                >
-                  Product Name
-                  {sortConfig.key === "name" && (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
-                </th>
-                <th
-                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
-                  onClick={() => handleSort("stock")}
-                >
-                  Stock
-                  {sortConfig.key === "stock" && (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
-                </th>
-                <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
-                  Description
-                </th>
-                <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
-                  Availability
-                </th>
-                <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
-                  Options
-                </th>
-              </tr>
-            </thead>
 
-            <tbody className="divide-y divide-gray-200">
-              {filteredProducts.map((element) => {
-                let stockStatus = "";
-                let stockClass = "";
-
-                if (element.stock === 0) {
-                  stockStatus = "Out of Stock";
-                  stockClass = "text-red-500";
-                } else if (element.stock <= 50) {
-                  stockStatus = "Low Stock";
-                  stockClass = "text-yellow-500";
-                } else {
-                  stockStatus = "In Stock";
-                  stockClass = "text-green-500";
-                }
-
-                return (
-                  <tr key={element._id}>
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-900">
-                      {element.category}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2  text-gray-900">
-                      {element.name}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                      {element.stock}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                      {element.description}
-                    </td>
-                    <td className={`whitespace-nowrap px-4 py-2 font-semibold ${stockClass}`}>
-                      {stockStatus}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                      <div className="flex items-center">
-                        <select
-                          className="border-2 rounded-md text-xs px-2 mr-2 w-16" // Increased width
-                          defaultValue={1}
-                          disabled={element.stock === 0}
-                          onChange={(e) => handleQuantityChange(element._id, parseInt(e.target.value))}
-                        >
-                          {getMaxQuantity(element).map((num) => (
-                            <option key={num} value={num}>
-                              {num}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          className={`px-2 py-1 cursor-pointer rounded-lg font-semibold ${
-                            element.stock === 0 ? "bg-gray-400" : "bg-blue-500 text-white"
-                          }`}
-                          onClick={() => handleAddToCart(element, selectedQuantities[element._id] || 1)}
-                          disabled={element.stock === 0}
-                        >
-                          Order
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          <div className="flex justify-between items-center p-4">
-            <div>
-              Showing {Math.min((currentPage - 1) * itemsPerPage + 1, products.length)} to {Math.min(currentPage * itemsPerPage, products.length)} of {products.length} products
-            </div>
-            <div className="flex gap-2">
-              {pageNumbers.map(number => (
-                <button
-                  key={number}
-                  className={`px-4 py-2 border ${currentPage === number ? 'bg-blue-500 text-white' : 'bg-white text-black'}`}
-                  onClick={() => handlePageChange(number)}
-                >
-                  {number}
-                </button>
-              ))}
-            </div>
+          <div className="ag-theme-alpine rounded-lg border border-base-200" style={{ width: "100%" }}>
+            <AgGridReact
+              rowData={filteredProducts}
+              columnDefs={columns}
+              defaultColDef={defaultColDef}
+              pagination={true}
+              paginationPageSize={pageSize}
+              rowSelection="multiple"
+              enableRangeSelection={true}
+              enableCharts={true}
+              domLayout="autoHeight"
+              onGridReady={(params) => {
+                params.api.sizeColumnsToFit();
+                params.api.paginationSetPageSize(pageSize);
+              }}
+            />
           </div>
         </div>
       </div>

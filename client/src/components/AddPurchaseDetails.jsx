@@ -20,11 +20,13 @@ export default function AddPurchaseDetails({
   const [open, setOpen] = useState(true);
   const cancelButtonRef = useRef(null);
 
-  const isFormComplete = Object.values(purchase).every(
-    (field) => field !== ""
-  );
+  const closeModal = () => {
+    setOpen(false);
+    addSaleModalSetting();
+  };
 
-  // Handling Input Change for input fields
+  const isFormComplete = Object.values(purchase).every((field) => field !== "");
+
   const handleInputChange = (key, value) => {
     setPurchase((prevPurchase) => {
       const updatedPurchase = { ...prevPurchase, [key]: value };
@@ -47,11 +49,10 @@ export default function AddPurchaseDetails({
     });
   };
 
-  // POST Data
   const addPurchase = () => {
     const purchaseData = {
       ...purchase,
-      purchaseDate: new Date(purchase.purchaseDate), // Convert date string to Date object
+      purchaseDate: new Date(purchase.purchaseDate),
     };
 
     fetch("http://localhost:4000/api/purchase/add", {
@@ -62,10 +63,10 @@ export default function AddPurchaseDetails({
       body: JSON.stringify(purchaseData),
     })
       .then((res) => res.json())
-      .then((result) => {
+      .then(() => {
         alert("Purchase ADDED");
         handlePageUpdate();
-        addSaleModalSetting();
+        closeModal();
       })
       .catch((err) => {
         console.error("Error adding purchase:", err);
@@ -73,14 +74,25 @@ export default function AddPurchaseDetails({
       });
   };
 
+  const selectStyles = {
+    control: (base) => ({
+      ...base,
+      minHeight: "32px",
+      fontSize: "0.875rem",
+      borderColor: "hsl(var(--b3) / 1)",
+      borderRadius: "var(--rounded-btn, 0.5rem)",
+      backgroundColor: "hsl(var(--b1) / 1)",
+    }),
+    menu: (base) => ({ ...base, zIndex: 70 }),
+  };
+
   return (
-    // Modal
     <Transition.Root show={open} as={Fragment}>
       <Dialog
         as="div"
-        className="relative z-10"
+        className="relative z-[60]"
         initialFocus={cancelButtonRef}
-        onClose={setOpen}
+        onClose={closeModal}
       >
         <Transition.Child
           as={Fragment}
@@ -91,10 +103,10 @@ export default function AddPurchaseDetails({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+          <div className="fixed inset-0 bg-base-content/40 transition-opacity" />
         </Transition.Child>
 
-        <div className="fixed inset-0 z-10 overflow-y-auto">
+        <div className="fixed inset-0 z-[60] overflow-y-auto">
           <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
             <Transition.Child
               as={Fragment}
@@ -105,116 +117,117 @@ export default function AddPurchaseDetails({
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <div className="sm:flex sm:items-start">
-                    <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
-                      <PlusIcon className="h-6 w-6 text-blue-400" aria-hidden="true" />
+              <Dialog.Panel className="relative w-full max-w-lg transform overflow-hidden rounded-xl border border-base-300 bg-base-100 text-left shadow-lg transition-all sm:my-8 font-['Inter','Segoe_UI','Roboto',sans-serif]">
+                <div className="border-b border-base-200 px-5 py-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <PlusIcon className="h-5 w-5" aria-hidden="true" />
                     </div>
-                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                      <Dialog.Title as="h3" className="text-lg py-4 font-semibold leading-6 text-gray-900">
-                        Purchase Details
+                    <div className="min-w-0 flex-1">
+                      <Dialog.Title as="h3" className="text-lg font-semibold text-base-content">
+                        Add purchase
                       </Dialog.Title>
-                      <form action="#">
-                        <div className="grid gap-4 mb-4 sm:grid-cols-2">
-                          <div>
-                            <label htmlFor="productID" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                              Product Name
-                            </label>
-                            <Select
-                              id="productID"
-                              name="productID"
-                              options={products.map(product => ({
-                                value: product._id,
-                                label: product.name,
-                              }))}
-                              onChange={(option) => handleInputChange("productID", option.value)}
-                              className="basic-single"
-                              classNamePrefix="select"
-                              isSearchable
-                              placeholder="Select Product"
-                            />
-                          </div>
-                          <div>
-                            <label htmlFor="quantityPurchased" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                              Quantity Purchased
-                            </label>
-                            <input
-                              type="number"
-                              name="quantityPurchased"
-                              id="quantityPurchased"
-                              value={purchase.quantityPurchased}
-                              onChange={(e) => handleInputChange(e.target.name, e.target.value)}
-                              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                              placeholder="Quantity Purchased"
-                            />
-                          </div>
-                          <div>
-                            <label htmlFor="pricePerUnit" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                              Price per Unit
-                            </label>
-                            <input
-                              type="number"
-                              name="pricePerUnit"
-                              id="pricePerUnit"
-                              value={purchase.pricePerUnit}
-                              onChange={(e) => handleInputChange(e.target.name, e.target.value)}
-                              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                              placeholder="Price per Unit"
-                            />
-                          </div>
-                          <div>
-                            <label htmlFor="totalPurchaseAmount" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                              Total Purchase Amount
-                            </label>
-                            <input
-                              type="number"
-                              name="totalPurchaseAmount"
-                              id="totalPurchaseAmount"
-                              value={purchase.totalPurchaseAmount}
-                              onChange={(e) => handleInputChange(e.target.name, e.target.value)}
-                              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                              placeholder="Total Purchase Amount"
-                            />
-                          </div>
-                          <div className="h-fit w-fit">
-                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white" htmlFor="purchaseDate">
-                              Purchase Date
-                            </label>
-                            <input
-                              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                              type="date"
-                              id="purchaseDate"
-                              name="purchaseDate"
-                              value={purchase.purchaseDate}
-                              onChange={(e) => handleInputChange(e.target.name, e.target.value)}
-                            />
-                          </div>
-                        </div>
-                      </form>
+                      <p className="mt-0.5 text-sm text-base-content/60">
+                        Record inbound stock and cost for a product.
+                      </p>
                     </div>
                   </div>
                 </div>
-                <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+
+                <div className="px-5 py-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                      <label htmlFor="productID" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-base-content/50">
+                        Product
+                      </label>
+                      <Select
+                        id="productID"
+                        name="productID"
+                        options={products.map((product) => ({
+                          value: product._id,
+                          label: product.name,
+                        }))}
+                        onChange={(option) => handleInputChange("productID", option?.value ?? "")}
+                        classNamePrefix="select"
+                        isSearchable
+                        placeholder="Select product"
+                        styles={selectStyles}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="quantityPurchased" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-base-content/50">
+                        Quantity purchased
+                      </label>
+                      <input
+                        type="number"
+                        name="quantityPurchased"
+                        id="quantityPurchased"
+                        value={purchase.quantityPurchased}
+                        onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                        className="input input-bordered input-sm w-full border-base-300"
+                        placeholder="Units"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="pricePerUnit" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-base-content/50">
+                        Price per unit
+                      </label>
+                      <input
+                        type="number"
+                        name="pricePerUnit"
+                        id="pricePerUnit"
+                        value={purchase.pricePerUnit}
+                        onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                        className="input input-bordered input-sm w-full border-base-300"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="totalPurchaseAmount" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-base-content/50">
+                        Total purchase amount
+                      </label>
+                      <input
+                        type="number"
+                        name="totalPurchaseAmount"
+                        id="totalPurchaseAmount"
+                        value={purchase.totalPurchaseAmount}
+                        onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                        className="input input-bordered input-sm w-full border-base-300"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-base-content/50" htmlFor="purchaseDate">
+                        Purchase date
+                      </label>
+                      <input
+                        className="input input-bordered input-sm w-full border-base-300"
+                        type="date"
+                        id="purchaseDate"
+                        name="purchaseDate"
+                        value={purchase.purchaseDate}
+                        onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col-reverse gap-2 border-t border-base-200 bg-base-200/40 px-5 py-3 sm:flex-row sm:justify-end">
                   <button
                     type="button"
-                    className={`inline-flex w-full justify-center rounded-md ${
-                      isFormComplete
-                        ? "bg-blue-600 hover:bg-blue-500"
-                        : "bg-gray-300"
-                    } px-3 py-2 text-sm font-semibold text-white shadow-sm sm:ml-3 sm:w-auto`}
-                    onClick={addPurchase}
-                    disabled={!isFormComplete}
-                  >
-                    Add
-                  </button>
-                  <button
-                    type="button"
-                    className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
-                    onClick={() => addSaleModalSetting()}
+                    className="btn btn-sm btn-ghost transition-colors duration-200 hover:bg-base-300/50"
+                    onClick={closeModal}
                     ref={cancelButtonRef}
                   >
                     Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-primary transition-colors duration-200 hover:bg-opacity-90 disabled:btn-disabled"
+                    onClick={addPurchase}
+                    disabled={!isFormComplete}
+                  >
+                    Add purchase
                   </button>
                 </div>
               </Dialog.Panel>

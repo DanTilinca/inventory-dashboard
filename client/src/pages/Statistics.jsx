@@ -1,45 +1,96 @@
-import React, { useEffect, useState } from "react";
-import Chart from "react-apexcharts";
-import { Doughnut } from "react-chartjs-2";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
-import 'tailwindcss/tailwind.css';
+import React, { useEffect, useMemo, useState } from "react";
+import { Bar, Doughnut } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Tooltip,
+  Legend,
+} from "chart.js";
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
+
+const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function getLast12Months() {
+  const currentMonth = new Date().getMonth();
+  const last12Months = [];
+
+  for (let i = 0; i < 12; i++) {
+    last12Months.unshift(monthLabels[(currentMonth - i + 12) % 12]);
+  }
+
+  return last12Months;
+}
+
+const verticalBarDataset = (label, color) => ({
+  label,
+  data: new Array(12).fill(0),
+  backgroundColor: color,
+  borderRadius: 6,
+  maxBarThickness: 40,
+});
+
+const emptyHorizontalBar = (label, color) => ({
+  labels: [],
+  datasets: [
+    {
+      label,
+      data: [],
+      backgroundColor: color,
+      borderRadius: 6,
+      maxBarThickness: 36,
+    },
+  ],
+});
+
+const verticalBarOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: { mode: "index", intersect: false },
+  },
+  scales: {
+    x: {
+      grid: { color: "#e5e7eb", drawBorder: false },
+      ticks: { color: "#6b7280", maxRotation: 45 },
+    },
+    y: {
+      beginAtZero: true,
+      grid: { color: "#e5e7eb", borderDash: [4, 4], drawBorder: false },
+      ticks: { color: "#6b7280", callback: (v) => Math.round(Number(v)) },
+    },
+  },
+};
+
+const horizontalBarOptions = {
+  indexAxis: "y",
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: { mode: "index", intersect: false },
+  },
+  scales: {
+    x: {
+      beginAtZero: true,
+      grid: { color: "#e5e7eb", drawBorder: false },
+      ticks: { color: "#6b7280" },
+    },
+    y: {
+      grid: { display: false },
+      ticks: { color: "#6b7280", font: { size: 11 } },
+    },
+  },
+};
 
 function Statistics() {
-  const [topProductsBySales, setTopProductsBySales] = useState({
-    options: {
-      chart: {
-        id: "top-products-sales",
-      },
-      xaxis: {
-        categories: [],
-      },
-    },
-    series: [
-      {
-        name: "Sales",
-        data: [],
-      },
-    ],
-  });
+  const [topProductsBySalesBar, setTopProductsBySalesBar] = useState(() => emptyHorizontalBar("Sales", "#3b82f6"));
 
-  const [topProductsByStock, setTopProductsByStock] = useState({
-    options: {
-      chart: {
-        id: "top-products-stock",
-      },
-      xaxis: {
-        categories: [],
-      },
-    },
-    series: [
-      {
-        name: "Stock",
-        data: [],
-      },
-    ],
-  });
+  const [topProductsByStockBar, setTopProductsByStockBar] = useState(() => emptyHorizontalBar("Stock", "#10b981"));
 
   const [stockStatus, setStockStatus] = useState({
     labels: ["Out of Stock", "Low Stock", "In Stock"],
@@ -52,38 +103,14 @@ function Statistics() {
     ],
   });
 
-  const [salesLast12Months, setSalesLast12Months] = useState({
-    options: {
-      chart: {
-        id: "sales-last-12-months",
-      },
-      xaxis: {
-        categories: getLast12Months(),
-      },
-    },
-    series: [
-      {
-        name: "Sales",
-        data: new Array(12).fill(0),
-      },
-    ],
+  const [salesLast12Bar, setSalesLast12Bar] = useState({
+    labels: getLast12Months(),
+    datasets: [verticalBarDataset("Sales", "#6366f1")],
   });
 
-  const [purchasesLast12Months, setPurchasesLast12Months] = useState({
-    options: {
-      chart: {
-        id: "purchases-last-12-months",
-      },
-      xaxis: {
-        categories: getLast12Months(),
-      },
-    },
-    series: [
-      {
-        name: "Purchases",
-        data: new Array(12).fill(0),
-      },
-    ],
+  const [purchasesLast12Bar, setPurchasesLast12Bar] = useState({
+    labels: getLast12Months(),
+    datasets: [verticalBarDataset("Purchases", "#f59e0b")],
   });
 
   const [spentLast12Months, setSpentLast12Months] = useState(0);
@@ -104,22 +131,20 @@ function Statistics() {
     fetch(`http://localhost:4000/api/product/topProductsByStock`)
       .then((response) => response.json())
       .then((data) => {
-        setTopProductsByStock({
-          options: {
-            ...topProductsByStock.options,
-            xaxis: {
-              categories: data.map((item) => item.name),
-            },
-          },
-          series: [
+        setTopProductsByStockBar({
+          labels: data.map((item) => item.name),
+          datasets: [
             {
-              name: "Stock",
+              label: "Stock",
               data: data.map((item) => item.stock),
+              backgroundColor: "#10b981",
+              borderRadius: 6,
+              maxBarThickness: 36,
             },
           ],
         });
       })
-      .catch((err) => console.error('Failed to fetch top products by stock:', err));
+      .catch((err) => console.error("Failed to fetch top products by stock:", err));
   };
 
   const fetchStockStatusData = () => {
@@ -137,14 +162,14 @@ function Statistics() {
           ],
         });
       })
-      .catch((err) => console.error('Failed to fetch stock status:', err));
+      .catch((err) => console.error("Failed to fetch stock status:", err));
   };
 
   const fetchSpentLast12Months = () => {
     fetch(`http://localhost:4000/api/purchase/spentLast12Months`)
       .then((response) => response.json())
       .then((data) => setSpentLast12Months(Math.round(data.totalSpent)))
-      .catch((err) => console.error('Failed to fetch spent last 12 months:', err));
+      .catch((err) => console.error("Failed to fetch spent last 12 months:", err));
   };
 
   const fetchPurchasesLast12Months = () => {
@@ -152,29 +177,27 @@ function Statistics() {
       .then((response) => response.json())
       .then((data) => {
         const purchasesData = mapDataToLast12Months(data.purchasesByMonth);
-        setPurchasesLast12Months({
-          options: {
-            ...purchasesLast12Months.options,
-            xaxis: {
-              categories: getLast12Months(),
-            },
-          },
-          series: [
+        setPurchasesLast12Bar({
+          labels: getLast12Months(),
+          datasets: [
             {
-              name: "Purchases",
+              label: "Purchases",
               data: purchasesData,
+              backgroundColor: "#f59e0b",
+              borderRadius: 6,
+              maxBarThickness: 40,
             },
           ],
         });
       })
-      .catch((err) => console.error('Failed to fetch purchases last 12 months:', err));
+      .catch((err) => console.error("Failed to fetch purchases last 12 months:", err));
   };
 
   const fetchEarnedLast12Months = () => {
     fetch(`http://localhost:4000/api/sales/get/earnedlast12months`)
       .then((response) => response.json())
       .then((data) => setEarnedLast12Months(Math.round(data.totalEarned)))
-      .catch((err) => console.error('Failed to fetch earned last 12 months:', err));
+      .catch((err) => console.error("Failed to fetch earned last 12 months:", err));
   };
 
   const fetchSalesLast12Months = () => {
@@ -182,64 +205,45 @@ function Statistics() {
       .then((response) => response.json())
       .then((data) => {
         const salesData = mapDataToLast12Months(data.salesByMonth);
-        setSalesLast12Months({
-          options: {
-            ...salesLast12Months.options,
-            xaxis: {
-              categories: getLast12Months(),
-            },
-          },
-          series: [
+        setSalesLast12Bar({
+          labels: getLast12Months(),
+          datasets: [
             {
-              name: "Sales",
-              data: salesData.map(val => Math.round(val)),
+              label: "Sales",
+              data: salesData.map((val) => Math.round(val)),
+              backgroundColor: "#6366f1",
+              borderRadius: 6,
+              maxBarThickness: 40,
             },
           ],
         });
       })
-      .catch((err) => console.error('Failed to fetch sales last 12 months:', err));
+      .catch((err) => console.error("Failed to fetch sales last 12 months:", err));
   };
 
   const fetchTopProductsBySalesData = () => {
     fetch(`http://localhost:4000/api/sales/get/topproductsbysales`)
       .then((response) => response.json())
       .then((data) => {
-        setTopProductsBySales({
-          options: {
-            ...topProductsBySales.options,
-            xaxis: {
-              categories: data.map((item) => item.name),
-            },
-          },
-          series: [
+        setTopProductsBySalesBar({
+          labels: data.map((item) => item.name),
+          datasets: [
             {
-              name: "Sales",
+              label: "Sales",
               data: data.map((item) => item.totalSold),
+              backgroundColor: "#3b82f6",
+              borderRadius: 6,
+              maxBarThickness: 36,
             },
           ],
         });
       })
-      .catch((err) => console.error('Failed to fetch top products by sales:', err));
+      .catch((err) => console.error("Failed to fetch top products by sales:", err));
   };
 
-  function getLast12Months() {
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const currentMonth = new Date().getMonth();
-    const last12Months = [];
-
-    for (let i = 0; i < 12; i++) {
-      last12Months.unshift(months[(currentMonth - i + 12) % 12]);
-    }
-
-    return last12Months;
-  }
-
   function mapDataToLast12Months(data) {
-    const last12Months = getLast12Months();
     const mappedData = new Array(12).fill(0);
     data.forEach((item, index) => {
-      const month = new Date().getMonth() - index;
-      const adjustedMonth = (month + 12) % 12;
       mappedData[11 - index] = item;
     });
     return mappedData;
@@ -249,58 +253,148 @@ function Statistics() {
     setProfitLast12Months(Math.round(earnedLast12Months - spentLast12Months));
   }, [earnedLast12Months, spentLast12Months]);
 
+  const formatCurrency = (value) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(value || 0);
+
+  const summaryCards = [
+    { title: "Spent Last 12 Months", value: formatCurrency(spentLast12Months), tone: "text-warning" },
+    { title: "Earned Last 12 Months", value: formatCurrency(earnedLast12Months), tone: "text-success" },
+    {
+      title: "Profit Last 12 Months",
+      value: formatCurrency(profitLast12Months),
+      tone: profitLast12Months >= 0 ? "text-primary" : "text-error",
+    },
+  ];
+
+  const chartHeightClass = "h-[320px] w-full min-h-[260px]";
+
+  const topStockHorizontalOptions = useMemo(
+    () => ({
+      ...horizontalBarOptions,
+      plugins: {
+        ...horizontalBarOptions.plugins,
+        tooltip: {
+          ...horizontalBarOptions.plugins.tooltip,
+          callbacks: {
+            label: (ctx) => ` ${ctx.dataset.label}: ${Number(ctx.raw).toLocaleString()}`,
+          },
+        },
+      },
+    }),
+    []
+  );
+
+  const topSalesHorizontalOptions = useMemo(
+    () => ({
+      ...horizontalBarOptions,
+      plugins: {
+        ...horizontalBarOptions.plugins,
+        tooltip: {
+          ...horizontalBarOptions.plugins.tooltip,
+          callbacks: {
+            label: (ctx) => ` ${ctx.dataset.label}: ${Number(ctx.raw).toLocaleString()} units`,
+          },
+        },
+      },
+    }),
+    []
+  );
+
   return (
-    <div className="col-span-10 p-6 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6">Statistics</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        {/* Spent Last 12 Months */}
-        <div className="bg-white p-4 rounded-lg shadow-md col-span-1">
-          <h2 className="text-lg font-semibold mb-2">Spent Last 12 Months</h2>
-          <p className="text-2xl font-medium text-gray-900">${spentLast12Months}</p>
+    <div className="col-span-10 min-h-screen bg-base-200/40 p-4 md:p-6 font-['Inter','Segoe_UI','Roboto',sans-serif]">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-base-content">Statistics</h1>
+          <p className="mt-1 text-sm text-base-content/60">
+            Analytics overview for inventory, sales, purchases, and stock health.
+          </p>
         </div>
-        
-        {/* Earned Last 12 Months */}
-        <div className="bg-white p-4 rounded-lg shadow-md col-span-1">
-          <h2 className="text-lg font-semibold mb-2">Earned Last 12 Months</h2>
-          <p className="text-2xl font-medium text-gray-900">${earnedLast12Months}</p>
+        <button
+          type="button"
+          className="btn btn-sm btn-outline border-base-300 transition-colors duration-200 hover:bg-base-200"
+          onClick={() => {
+            fetchTopProductsByStockData();
+            fetchStockStatusData();
+            fetchSpentLast12Months();
+            fetchPurchasesLast12Months();
+            fetchEarnedLast12Months();
+            fetchSalesLast12Months();
+            fetchTopProductsBySalesData();
+          }}
+        >
+          Refresh Analytics
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {summaryCards.map((card) => (
+          <div key={card.title} className="rounded-xl border border-base-300 bg-base-100 p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-base-content/50">{card.title}</p>
+            <p className={`mt-3 text-3xl font-bold ${card.tone}`}>{card.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <div className="rounded-xl border border-base-300 bg-base-100 p-5 shadow-sm">
+          <h2 className="text-lg font-semibold text-base-content">Top 5 Products by Stock</h2>
+          <p className="mb-4 text-sm text-base-content/60">Highest available quantities by product</p>
+          <div className={chartHeightClass}>
+            <Bar data={topProductsByStockBar} options={topStockHorizontalOptions} />
+          </div>
         </div>
-        
-        {/* Profit Last 12 Months */}
-        <div className="bg-white p-4 rounded-lg shadow-md col-span-1">
-          <h2 className="text-lg font-semibold mb-2">Profit Last 12 Months</h2>
-          <p className="text-2xl font-medium text-gray-900">${profitLast12Months}</p>
+
+        <div className="rounded-xl border border-base-300 bg-base-100 p-5 shadow-sm">
+          <h2 className="text-lg font-semibold text-base-content">Stock Status</h2>
+          <p className="mb-4 text-sm text-base-content/60">Distribution of product stock levels</p>
+          <div className="mx-auto flex w-[85%] min-w-[13.5rem] max-w-[20.5rem] justify-center">
+            <div className="aspect-square w-full">
+              <Doughnut
+                data={stockStatus}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: "bottom",
+                      labels: { boxWidth: 10, usePointStyle: true },
+                    },
+                  },
+                  cutout: "62%",
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-base-300 bg-base-100 p-5 shadow-sm">
+          <h2 className="text-lg font-semibold text-base-content">Top 5 Products by Sales</h2>
+          <p className="mb-4 text-sm text-base-content/60">Best-selling items by units sold</p>
+          <div className={chartHeightClass}>
+            <Bar data={topProductsBySalesBar} options={topSalesHorizontalOptions} />
+          </div>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        {/* Top 5 Products by Stock */}
-        <div className="bg-white p-6 rounded-lg shadow-md col-span-1">
-          <h2 className="text-xl font-semibold mb-4">Top 5 Products by Stock</h2>
-          <Chart options={topProductsByStock.options} series={topProductsByStock.series} type="bar" height={350} />
+
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="rounded-xl border border-base-300 bg-base-100 p-5 shadow-sm">
+          <h2 className="text-lg font-semibold text-base-content">Sales Last 12 Months</h2>
+          <p className="mb-4 text-sm text-base-content/60">Monthly sales trend for the last year</p>
+          <div className={chartHeightClass}>
+            <Bar data={salesLast12Bar} options={verticalBarOptions} />
+          </div>
         </div>
-        
-        {/* Stock Status */}
-        <div className="bg-white p-6 rounded-lg shadow-md col-span-1">
-          <h2 className="text-xl font-semibold mb-4">Stock Status</h2>
-          <Doughnut data={stockStatus} />
-        </div>
-        
-        {/* Top 5 Products by Sales */}
-        <div className="bg-white p-6 rounded-lg shadow-md col-span-1">
-          <h2 className="text-xl font-semibold mb-4">Top 5 Products by Sales</h2>
-          <Chart options={topProductsBySales.options} series={topProductsBySales.series} type="bar" height={350} />
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Sales Last 12 Months */}
-        <div className="bg-white p-6 rounded-lg shadow-md col-span-1 md:col-span-1">
-          <h2 className="text-xl font-semibold mb-4">Sales Last 12 Months</h2>
-          <Chart options={salesLast12Months.options} series={salesLast12Months.series} type="bar" height={350} />
-        </div>
-        
-        {/* Purchases Last 12 Months */}
-        <div className="bg-white p-6 rounded-lg shadow-md col-span-1 md:col-span-1">
-          <h2 className="text-xl font-semibold mb-4">Purchases Last 12 Months</h2>
-          <Chart options={purchasesLast12Months.options} series={purchasesLast12Months.series} type="bar" height={350} />
+
+        <div className="rounded-xl border border-base-300 bg-base-100 p-5 shadow-sm">
+          <h2 className="text-lg font-semibold text-base-content">Purchases Last 12 Months</h2>
+          <p className="mb-4 text-sm text-base-content/60">Monthly purchasing spend and volume trend</p>
+          <div className={chartHeightClass}>
+            <Bar data={purchasesLast12Bar} options={verticalBarOptions} />
+          </div>
         </div>
       </div>
     </div>

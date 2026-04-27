@@ -5,10 +5,7 @@ import AuthContext from "../AuthContext";
 
 const categories = ["Electronics", "Groceries", "Healthcare", "Others"];
 
-export default function AddProduct({
-  addProductModalSetting,
-  handlePageUpdate,
-}) {
+export default function AddProduct({ addProductModalSetting, handlePageUpdate }) {
   const authContext = useContext(AuthContext);
   const [product, setProduct] = useState({
     userId: authContext.user,
@@ -24,6 +21,11 @@ export default function AddProduct({
     setProduct({ ...product, [key]: value });
   };
 
+  const closeModal = () => {
+    setOpen(false);
+    addProductModalSetting();
+  };
+
   const addProduct = () => {
     fetch("http://localhost:4000/api/product/add", {
       method: "POST",
@@ -32,22 +34,21 @@ export default function AddProduct({
       },
       body: JSON.stringify(product),
     })
-      .then((result) => {
+      .then(() => {
         alert("Product ADDED");
         handlePageUpdate();
-        addProductModalSetting();
+        closeModal();
       })
       .catch((err) => console.log(err));
   };
 
   return (
-    // Modal
     <Transition.Root show={open} as={Fragment}>
       <Dialog
         as="div"
-        className="relative z-10"
+        className="relative z-[60]"
         initialFocus={cancelButtonRef}
-        onClose={setOpen}
+        onClose={closeModal}
       >
         <Transition.Child
           as={Fragment}
@@ -58,10 +59,10 @@ export default function AddProduct({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+          <div className="fixed inset-0 bg-base-content/40 transition-opacity" />
         </Transition.Child>
 
-        <div className="fixed inset-0 z-10 overflow-y-auto">
+        <div className="fixed inset-0 z-[60] overflow-y-auto">
           <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
             <Transition.Child
               as={Fragment}
@@ -72,105 +73,89 @@ export default function AddProduct({
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <div className="sm:flex sm:items-start">
-                    <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
-                      <PlusIcon
-                        className="h-6 w-6 text-blue-400"
-                        aria-hidden="true"
-                      />
+              <Dialog.Panel className="relative w-full max-w-lg transform overflow-hidden rounded-xl border border-base-300 bg-base-100 text-left shadow-lg transition-all sm:my-8 font-['Inter','Segoe_UI','Roboto',sans-serif]">
+                <div className="border-b border-base-200 px-5 py-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <PlusIcon className="h-5 w-5" aria-hidden="true" />
                     </div>
-                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                      <Dialog.Title
-                        as="h3"
-                        className="text-lg font-semibold leading-6 text-gray-900"
-                      >
-                        Add Product
+                    <div className="min-w-0 flex-1 text-left">
+                      <Dialog.Title as="h3" className="text-lg font-semibold text-base-content">
+                        Add product
                       </Dialog.Title>
-                      <form action="#">
-                        <div className="grid gap-4 mb-4 sm:grid-cols-2">
-                          <div>
-                            <label
-                              htmlFor="name"
-                              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                            >
-                              Name
-                            </label>
-                            <input
-                              type="text"
-                              name="name"
-                              id="name"
-                              value={product.name}
-                              onChange={(e) =>
-                                handleInputChange(e.target.name, e.target.value)
-                              }
-                              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                              placeholder="Product Name"
-                            />
-                          </div>
-                          <div>
-                            <label
-                              htmlFor="category"
-                              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                            >
-                              Category
-                            </label>
-                            <select
-                              id="category"
-                              name="category"
-                              value={product.category}
-                              onChange={(e) =>
-                                handleInputChange(e.target.name, e.target.value)
-                              }
-                              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            >
-                              {categories.map((category, index) => (
-                                <option key={index} value={category}>
-                                  {category}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="sm:col-span-2">
-                            <label
-                              htmlFor="description"
-                              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                            >
-                              Description
-                            </label>
-                            <textarea
-                              id="description"
-                              rows="5"
-                              name="description"
-                              className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                              placeholder="Product Description"
-                              value={product.description}
-                              onChange={(e) =>
-                                handleInputChange(e.target.name, e.target.value)
-                              }
-                            ></textarea>
-                          </div>
-                        </div>
-                      </form>
+                      <p className="mt-0.5 text-sm text-base-content/60">
+                        Create a new SKU with category and description.
+                      </p>
                     </div>
                   </div>
                 </div>
-                <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+
+                <div className="px-5 py-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="sm:col-span-1">
+                      <label htmlFor="name" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-base-content/50">
+                        Name
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        id="name"
+                        value={product.name}
+                        onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                        className="input input-bordered input-sm w-full border-base-300"
+                        placeholder="Product name"
+                      />
+                    </div>
+                    <div className="sm:col-span-1">
+                      <label htmlFor="category" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-base-content/50">
+                        Category
+                      </label>
+                      <select
+                        id="category"
+                        name="category"
+                        value={product.category}
+                        onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                        className="select select-bordered select-sm w-full border-base-300"
+                      >
+                        {categories.map((category, index) => (
+                          <option key={index} value={category}>
+                            {category}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label htmlFor="description" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-base-content/50">
+                        Description
+                      </label>
+                      <textarea
+                        id="description"
+                        rows={4}
+                        name="description"
+                        className="textarea textarea-bordered textarea-sm w-full border-base-300 text-sm"
+                        placeholder="Product description"
+                        value={product.description}
+                        onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col-reverse gap-2 border-t border-base-200 bg-base-200/40 px-5 py-3 sm:flex-row sm:justify-end">
                   <button
                     type="button"
-                    className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto"
-                    onClick={addProduct}
-                  >
-                    Add Product
-                  </button>
-                  <button
-                    type="button"
-                    className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
-                    onClick={() => addProductModalSetting()}
+                    className="btn btn-sm btn-ghost border border-transparent transition-colors duration-200 hover:bg-base-300/50"
+                    onClick={closeModal}
                     ref={cancelButtonRef}
                   >
                     Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-primary transition-colors duration-200 hover:bg-opacity-90"
+                    onClick={addProduct}
+                  >
+                    Add product
                   </button>
                 </div>
               </Dialog.Panel>

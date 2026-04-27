@@ -1,128 +1,62 @@
-import React, { useState, useEffect, useContext } from "react";
-import { CSVLink } from "react-csv"; // Import CSVLink
+import React, { useState, useEffect, useMemo } from "react";
+import { CSVLink } from "react-csv";
+import { AgGridReact } from "ag-grid-react";
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-alpine.css";
+import "ag-grid-enterprise";
 import AddProduct from "../components/AddProduct";
 import UpdateProduct from "../components/UpdateProduct";
-import ImportProducts from "../components/ImportProducts"; // Import the new component
-import AuthContext from "../AuthContext";
+import ImportProducts from "../components/ImportProducts";
 
-const categories = ["All", "Electronics", "Groceries", "Healthcare", "Clothing", "Beauty", "Toys", "Sports", "Home", "Books", "Automotive"];
-const itemsPerPageOptions = [5, 10, 20, 50];
+const DEFAULT_PAGE_SIZE = 20;
 
 function Inventory() {
   const [showProductModal, setShowProductModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false); // State for import modal
+  const [showImportModal, setShowImportModal] = useState(false);
   const [updateProduct, setUpdateProduct] = useState([]);
   const [products, setAllProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
   const [updatePage, setUpdatePage] = useState(true);
   const [stores, setAllStores] = useState([]);
-  const [lowStockCount, setLowStockCount] = useState(0);
-  const [outOfStockCount, setOutOfStockCount] = useState(0);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "ascending" });
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-
-  const authContext = useContext(AuthContext);
 
   useEffect(() => {
     fetchProductsData();
-    fetchSalesData();
-  }, [updatePage, selectedCategory, searchTerm, sortConfig, currentPage, itemsPerPage]);
+    fetchStoresData();
+  }, [updatePage]);
 
-  // Fetching Data of All Products
   const fetchProductsData = () => {
     fetch(`http://localhost:4000/api/product/get`)
       .then((response) => response.json())
-      .then((data) => {
-        // Apply category filter
-        let filteredData = data;
-        if (selectedCategory !== "All") {
-          filteredData = data.filter(product => product.category === selectedCategory);
-        }
-
-        // Apply search filter
-        if (searchTerm) {
-          filteredData = filteredData.filter(product => product.name.toLowerCase().includes(searchTerm.toLowerCase()));
-        }
-
-        // Apply sorting
-        if (sortConfig.key) {
-          filteredData = filteredData.sort((a, b) => {
-            if (a[sortConfig.key] < b[sortConfig.key]) {
-              return sortConfig.direction === "ascending" ? -1 : 1;
-            }
-            if (a[sortConfig.key] > b[sortConfig.key]) {
-              return sortConfig.direction === "ascending" ? 1 : -1;
-            }
-            return 0;
-          });
-        }
-
-        setAllProducts(filteredData);
-        updateFilteredProducts(filteredData);
-
-        // Calculate low and out of stock counts
-        let lowStock = 0;
-        let outOfStock = 0;
-        filteredData.forEach(product => {
-          if (product.stock > 0 && product.stock <= 50) {
-            lowStock++;
-          } else if (product.stock === 0) {
-            outOfStock++;
-          }
-        });
-        setLowStockCount(lowStock);
-        setOutOfStockCount(outOfStock);
-      })
+      .then((data) => setAllProducts(data || []))
       .catch((err) => console.log(err));
   };
 
-  // Fetching all stores data
-  const fetchSalesData = () => {
+  const fetchStoresData = () => {
     fetch(`http://localhost:4000/api/store/get`)
       .then((response) => response.json())
-      .then((data) => {
-        setAllStores(data);
-      });
+      .then((data) => setAllStores(data || []));
   };
 
-  // Update filtered products for current page
-  const updateFilteredProducts = (data) => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    setFilteredProducts(data.slice(startIndex, endIndex));
-  };
-
-  // Modal for Product ADD
   const addProductModalSetting = () => {
     setShowProductModal(!showProductModal);
   };
 
-  // Modal for Product UPDATE
   const updateProductModalSetting = (selectedProductData) => {
     setUpdateProduct(selectedProductData);
     setShowUpdateModal(!showUpdateModal);
   };
 
-  // Modal for Import Products
   const importProductModalSetting = () => {
     setShowImportModal(!showImportModal);
   };
 
-  // Delete item
   const deleteItem = (id) => {
     fetch(`http://localhost:4000/api/product/delete/${id}`)
       .then((response) => response.json())
-      .then((data) => {
-        setUpdatePage(!updatePage);
-      });
+      .then(() => setUpdatePage(!updatePage));
   };
 
-  // Handle Page Update
   const handlePageUpdate = () => {
     setUpdatePage(!updatePage);
   };
@@ -132,111 +66,187 @@ function Inventory() {
     setSearchTerm(e.target.value);
   };
 
-  // Handle Category Change
-  const handleCategoryChange = (e) => {
-    setSelectedCategory(e.target.value);
-  };
-
-  // Handle Sort
-  const handleSort = (key) => {
-    let direction = "ascending";
-    if (sortConfig.key === key && sortConfig.direction === "ascending") {
-      direction = "descending";
+  const filteredProducts = useMemo(() => {
+    if (!searchTerm) {
+      return products;
     }
-    setSortConfig({ key, direction });
-  };
+    const q = searchTerm.toLowerCase();
+    return products.filter((product) => (product.name || "").toLowerCase().includes(q));
+  }, [products, searchTerm]);
 
-  // Handle Items Per Page Change
-  const handleItemsPerPageChange = (e) => {
-    setItemsPerPage(Number(e.target.value));
-    setCurrentPage(1); // Reset to first page when items per page changes
-  };
+  const inventoryMetrics = useMemo(() => {
+    const lowStockCount = products.filter((product) => product.stock > 0 && product.stock <= 50).length;
+    const outOfStockCount = products.filter((product) => Number(product.stock || 0) === 0).length;
+    const totalCategories = new Set(products.map((product) => product.category).filter(Boolean)).size;
 
-  // Handle Page Change
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
+    return {
+      totalProducts: products.length,
+      activeStores: stores.length,
+      totalCategories,
+      lowStockCount,
+      outOfStockCount,
+    };
+  }, [products, stores.length]);
 
-  // Generate Page Numbers
-  const totalPages = Math.ceil(products.length / itemsPerPage);
-  const pageNumbers = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pageNumbers.push(i);
-  }
-
-  // Prepare CSV data
-  const csvData = products.map(product => ({
-    name: product.name,
-    category: product.category,
-    stock: product.stock,
-    description: product.description
+  const csvData = filteredProducts.map((product) => ({
+    name: product.name || "N/A",
+    category: product.category || "N/A",
+    stock: product.stock || 0,
+    description: product.description || "",
   }));
 
+  const defaultColDef = {
+    sortable: true,
+    filter: true,
+    resizable: true,
+    flex: 1,
+    minWidth: 140,
+  };
+
+  const columns = [
+    { headerName: "Category", field: "category" },
+    { headerName: "Product Name", field: "name" },
+    {
+      headerName: "Stock",
+      field: "stock",
+      type: "rightAligned",
+      filter: "agNumberColumnFilter",
+      valueFormatter: (params) => Number(params.value || 0).toLocaleString(),
+    },
+    { headerName: "Description", field: "description", minWidth: 220 },
+    {
+      headerName: "Availability",
+      field: "stock",
+      minWidth: 170,
+      cellRenderer: (params) => {
+        const stock = Number(params.value || 0);
+        const badgeClass = stock === 0 ? "badge-error" : stock <= 50 ? "badge-warning" : "badge-success";
+        const label = stock === 0 ? "Out of Stock" : stock <= 50 ? "Low Stock" : "In Stock";
+        return <span className={`badge ${badgeClass} badge-outline`}>{label}</span>;
+      },
+    },
+    {
+      headerName: "Actions",
+      minWidth: 180,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params) => (
+        <div className="flex h-full items-center gap-2">
+          <button
+            className="btn btn-xs btn-success text-white transition-colors duration-200 hover:bg-opacity-80"
+            onClick={() => updateProductModalSetting(params.data)}
+          >
+            Edit
+          </button>
+          <button
+            className="btn btn-xs btn-error text-white transition-colors duration-200 hover:bg-opacity-80"
+            onClick={() => deleteItem(params.data._id)}
+          >
+            Delete
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <div className="col-span-12 lg:col-span-10 flex justify-center">
-      <div className="flex flex-col gap-5 w-11/12">
-        <div className="bg-white rounded p-3">
-          <span className="font-semibold px-4">Overall Inventory</span>
-          <div className="flex flex-col md:flex-row justify-center items-center">
-            <div className="flex flex-col p-10 w-full md:w-3/12">
-              <span className="font-semibold text-blue-600 text-base">
-                Total Products
-              </span>
-              <span className="font-semibold text-gray-600 text-lg">
-                {products.length}
-              </span>
+    <div className="col-span-12 lg:col-span-10 min-h-screen bg-base-200/40 p-4 md:p-6 font-['Inter','Segoe_UI','Roboto',sans-serif]">
+      <div className="flex w-full flex-col gap-4">
+        <div className="rounded-xl border border-base-300 bg-base-100 p-5 shadow-sm">
+          <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 className="text-3xl font-bold text-base-content">Inventory Intelligence</h1>
+              <p className="text-sm text-base-content/60">
+                Track stock levels, product mix, and category coverage in a single operational view.
+              </p>
             </div>
-            <div className="flex flex-col p-10 w-full md:w-3/12">
-              <span className="font-semibold text-orange-400 text-base">
-                Active Stores
-              </span>
-              <span className="font-semibold text-gray-600 text-lg">
-                {stores.length}
-              </span>
+          </div>
+
+          <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <div className="rounded-lg border border-base-200 bg-base-100 p-4">
+              <p className="text-xs uppercase tracking-wide text-base-content/50">Total Products</p>
+              <p className="mt-2 text-2xl font-bold text-base-content">{inventoryMetrics.totalProducts.toLocaleString()}</p>
             </div>
-            <div className="flex flex-col gap-3 p-10 w-full md:w-3/12 sm:border-y-2 md:border-x-2 md:border-y-0">
-              <span className="font-semibold text-purple-600 text-base">
-                Total Categories
-              </span>
-              <div className="flex gap-8">
-                <div className="flex flex-col">
-                  <span className="font-semibold text-gray-600 text-base">
-                    10
-                  </span>
-                </div>
-              </div>
+            <div className="rounded-lg border border-base-200 bg-base-100 p-4">
+              <p className="text-xs uppercase tracking-wide text-base-content/50">Active Stores</p>
+              <p className="mt-2 text-2xl font-bold text-base-content">{inventoryMetrics.activeStores.toLocaleString()}</p>
             </div>
-            <div className="flex flex-col gap-3 p-10 w-full md:w-3/12 border-y-2 md:border-x-2 md:border-y-0">
-              <span className="font-semibold text-red-600 text-base">
-                Stocks Status
-              </span>
-              <div className="flex gap-8">
-                <div className="flex flex-col">
-                  <span className='font-semibold text-gray-600 text-base'>
-                    {lowStockCount}
-                  </span>
-                  <span className='font-thin text-gray-400 text-xs'>
-                    Low Stock
-                  </span>
-                </div>
-                <div className='flex flex-col'>
-                  <span className='font-semibold text-gray-600 text-base'>
-                    {outOfStockCount}
-                  </span>
-                  <span className='font-thin text-gray-400 text-xs'>
-                    Out of Stock
-                  </span>
-                </div>
-              </div>
+            <div className="rounded-lg border border-base-200 bg-base-100 p-4">
+              <p className="text-xs uppercase tracking-wide text-base-content/50">Categories</p>
+              <p className="mt-2 text-2xl font-bold text-base-content">{inventoryMetrics.totalCategories.toLocaleString()}</p>
             </div>
+            <div className="rounded-lg border border-base-200 bg-base-100 p-4">
+              <p className="text-xs uppercase tracking-wide text-base-content/50">Low Stock</p>
+              <p className="mt-2 text-2xl font-bold text-warning">{inventoryMetrics.lowStockCount.toLocaleString()}</p>
+            </div>
+            <div className="rounded-lg border border-base-200 bg-base-100 p-4">
+              <p className="text-xs uppercase tracking-wide text-base-content/50">Out of Stock</p>
+              <p className="mt-2 text-2xl font-bold text-error">{inventoryMetrics.outOfStockCount.toLocaleString()}</p>
+            </div>
+          </div>
+
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-base-200 bg-base-100 p-3">
+            <div className="flex flex-1 flex-wrap items-center gap-2">
+              <input
+                className="input input-bordered input-sm w-full max-w-xs border-base-300"
+                type="text"
+                placeholder="Search by product name"
+                value={searchTerm}
+                onChange={handleSearchTerm}
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="btn btn-sm btn-outline border-base-300 transition-colors duration-200 hover:bg-base-200"
+                onClick={fetchProductsData}
+              >
+                Refresh
+              </button>
+              <button
+                className="btn btn-sm btn-primary transition-colors duration-200 hover:bg-opacity-80"
+                onClick={addProductModalSetting}
+              >
+                Add Product
+              </button>
+              <button
+                className="btn btn-sm btn-success text-white transition-colors duration-200 hover:bg-opacity-80"
+                onClick={importProductModalSetting}
+              >
+                Import Products
+              </button>
+              <CSVLink
+                data={csvData}
+                filename={"products_inventory.csv"}
+                className="btn btn-sm btn-warning text-white transition-colors duration-200 hover:bg-opacity-80"
+                target="_blank"
+              >
+                Export CSV
+              </CSVLink>
+            </div>
+          </div>
+
+          <div className="ag-theme-alpine rounded-lg border border-base-200" style={{ width: "100%" }}>
+            <AgGridReact
+              rowData={filteredProducts}
+              columnDefs={columns}
+              defaultColDef={defaultColDef}
+              pagination={true}
+              paginationPageSize={DEFAULT_PAGE_SIZE}
+              rowSelection="multiple"
+              enableRangeSelection={true}
+              enableCharts={true}
+              domLayout="autoHeight"
+              onGridReady={(params) => {
+                params.api.sizeColumnsToFit();
+                params.api.paginationSetPageSize(DEFAULT_PAGE_SIZE);
+              }}
+            />
           </div>
         </div>
 
         {showProductModal && (
-          <AddProduct
-            addProductModalSetting={addProductModalSetting}
-            handlePageUpdate={handlePageUpdate}
-          />
+          <AddProduct addProductModalSetting={addProductModalSetting} handlePageUpdate={handlePageUpdate} />
         )}
         {showUpdateModal && (
           <UpdateProduct
@@ -246,182 +256,8 @@ function Inventory() {
           />
         )}
         {showImportModal && (
-          <ImportProducts
-            importProductModalSetting={importProductModalSetting}
-            handlePageUpdate={handlePageUpdate}
-          />
+          <ImportProducts importProductModalSetting={importProductModalSetting} handlePageUpdate={handlePageUpdate} />
         )}
-
-        {/* Table  */}
-        <div className="overflow-x-auto rounded-lg border bg-white border-gray-200">
-          <div className="flex justify-between pt-5 pb-3 px-3">
-            <div className="flex gap-4 justify-center items-center">
-              <span className="font-bold">Products</span>
-              <div className="flex justify-center items-center px-2 border-2 rounded-md">
-                <img
-                  alt="search-icon"
-                  className="w-5 h-5"
-                  src={require("../assets/search-icon.png")}
-                />
-                <input
-                  className="border-none outline-none focus:border-none text-xs"
-                  type="text"
-                  placeholder="Search here"
-                  value={searchTerm}
-                  onChange={handleSearchTerm}
-                />
-              </div>
-              <select
-                className="border-2 rounded-md text-xs px-2 w-auto"
-                value={selectedCategory}
-                onChange={handleCategoryChange}
-              >
-                {categories.map((category, index) => (
-                  <option key={index} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="border-2 rounded-md text-xs px-2 w-40"
-                value={itemsPerPage}
-                onChange={handleItemsPerPageChange}
-              >
-                {itemsPerPageOptions.map((option, index) => (
-                  <option key={index} value={option}>
-                    {option} items per page
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex gap-4">
-              <button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold p-2 text-xs rounded"
-                onClick={addProductModalSetting}
-              >
-                Add Product
-              </button>
-              <button
-                className="bg-green-500 hover:bg-green-700 text-white font-bold p-2 text-xs rounded"
-                onClick={importProductModalSetting}
-              >
-                Import Products
-              </button>
-              <CSVLink
-                data={csvData}
-                filename={"products_inventory.csv"}
-                className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold p-2 text-xs rounded"
-                target="_blank"
-              >
-                Export Products
-              </CSVLink>
-            </div>
-          </div>
-          <table className="min-w-full divide-y-2 divide-gray-200 text-sm">
-            <thead>
-              <tr>
-                <th
-                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
-                  onClick={() => handleSort("category")}
-                >
-                  Category
-                  {sortConfig.key === "category" && (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
-                </th>
-                <th
-                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
-                  onClick={() => handleSort("name")}
-                >
-                  Product Name
-                  {sortConfig.key === "name" && (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
-                </th>
-                <th
-                  className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900 cursor-pointer"
-                  onClick={() => handleSort("stock")}
-                >
-                  Stock
-                  {sortConfig.key === "stock" && (sortConfig.direction === "ascending" ? " ▲" : " ▼")}
-                </th>
-                <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
-                  Description
-                </th>
-                <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
-                  Availability
-                </th>
-                <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
-                  Options
-                </th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-gray-200">
-              {filteredProducts.map((element) => {
-                let stockStatus = "";
-                let stockClass = "";
-
-                if (element.stock === 0) {
-                  stockStatus = "Out of Stock";
-                  stockClass = "text-red-500";
-                } else if (element.stock <= 50) {
-                  stockStatus = "Low Stock";
-                  stockClass = "text-yellow-500";
-                } else {
-                  stockStatus = "In Stock";
-                  stockClass = "text-green-500";
-                }
-
-                return (
-                  <tr key={element._id}>
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-900">
-                      {element.category}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2  text-gray-900">
-                      {element.name}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                      {element.stock}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                      {element.description}
-                    </td>
-                    <td className={`whitespace-nowrap px-4 py-2 font-semibold ${stockClass}`}>
-                      {stockStatus}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                      <button
-                        className="bg-green-700 text-white px-2 py-1 cursor-pointer rounded-lg font-semibold"
-                        onClick={() => updateProductModalSetting(element)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="bg-red-600 text-white px-2 py-1 ml-2 cursor-pointer rounded-lg font-semibold"
-                        onClick={() => deleteItem(element._id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          <div className="flex justify-between items-center p-4">
-            <div>
-              Showing {Math.min((currentPage - 1) * itemsPerPage + 1, products.length)} to {Math.min(currentPage * itemsPerPage, products.length)} of {products.length} products
-            </div>
-            <div className="flex gap-2">
-              {pageNumbers.map(number => (
-                <button
-                  key={number}
-                  className={`px-4 py-2 border ${currentPage === number ? 'bg-blue-500 text-white' : 'bg-white text-black'}`}
-                  onClick={() => handlePageChange(number)}
-                >
-                  {number}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

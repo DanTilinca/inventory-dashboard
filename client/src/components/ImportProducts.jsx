@@ -1,5 +1,6 @@
 import React, { useState, useContext } from "react";
 import { Dialog, Transition } from "@headlessui/react";
+import { ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 import AuthContext from "../AuthContext";
 import CSVReader from "react-csv-reader";
 
@@ -8,21 +9,22 @@ export default function ImportProducts({ importProductModalSetting, handlePageUp
   const [csvData, setCsvData] = useState([]);
   const authContext = useContext(AuthContext);
 
-  const handleFileLoad = (data) => {
-    console.log("Raw CSV data:", data);
+  const closeModal = () => {
+    setOpen(false);
+    importProductModalSetting();
+  };
 
+  const handleFileLoad = (data) => {
     const headers = data[0];
-    const formattedData = data.slice(1).map(row => {
-      let product = {};
+    const formattedData = data.slice(1).map((row) => {
+      const product = {};
       headers.forEach((header, index) => {
         product[header] = row[index];
       });
-      product.userID = authContext.user; // Use userID to match the schema
-      product.stock = Number(product.stock); // Convert stock to number
+      product.userID = authContext.user;
+      product.stock = Number(product.stock);
       return product;
     });
-
-    console.log("Formatted data:", formattedData);
     setCsvData(formattedData);
   };
 
@@ -41,7 +43,7 @@ export default function ImportProducts({ importProductModalSetting, handlePageUp
         } else {
           alert("Products Imported Successfully");
           handlePageUpdate();
-          importProductModalSetting();
+          closeModal();
         }
       })
       .catch((err) => console.log(err));
@@ -49,7 +51,7 @@ export default function ImportProducts({ importProductModalSetting, handlePageUp
 
   return (
     <Transition.Root show={open} as={React.Fragment}>
-      <Dialog as="div" className="relative z-10" onClose={setOpen}>
+      <Dialog as="div" className="relative z-[60]" onClose={closeModal}>
         <Transition.Child
           as={React.Fragment}
           enter="ease-out duration-300"
@@ -59,10 +61,10 @@ export default function ImportProducts({ importProductModalSetting, handlePageUp
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+          <div className="fixed inset-0 bg-base-content/40 transition-opacity" />
         </Transition.Child>
 
-        <div className="fixed inset-0 z-10 overflow-y-auto">
+        <div className="fixed inset-0 z-[60] overflow-y-auto">
           <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
             <Transition.Child
               as={React.Fragment}
@@ -73,42 +75,58 @@ export default function ImportProducts({ importProductModalSetting, handlePageUp
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <div className="sm:flex sm:items-start">
-                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                      <Dialog.Title
-                        as="h3"
-                        className="text-lg font-semibold leading-6 text-gray-900"
-                      >
-                        Import Products
+              <Dialog.Panel className="relative w-full max-w-lg transform overflow-hidden rounded-xl border border-base-300 bg-base-100 text-left shadow-lg transition-all sm:my-8 font-['Inter','Segoe_UI','Roboto',sans-serif]">
+                <div className="border-b border-base-200 px-5 py-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <ArrowUpTrayIcon className="h-5 w-5" aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <Dialog.Title as="h3" className="text-lg font-semibold text-base-content">
+                        Import products
                       </Dialog.Title>
-                      <div className="mt-2">
-                        <CSVReader
-                          cssClass="csv-reader-input"
-                          label="Select CSV with Product Data"
-                          onFileLoaded={handleFileLoad}
-                          inputId="csv"
-                          inputStyle={{ color: 'red' }}
-                        />
-                      </div>
+                      <p className="mt-0.5 text-sm text-base-content/60">
+                        Upload a CSV whose header row matches your product fields. Rows will be validated on the server.
+                      </p>
                     </div>
                   </div>
                 </div>
-                <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+
+                <div className="px-5 py-4">
+                  <div className="rounded-lg border border-base-200 bg-base-200/30 p-4">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-base-content/50">
+                      CSV file
+                    </p>
+                    <CSVReader
+                      cssClass="csv-reader-input text-sm text-base-content"
+                      label=""
+                      onFileLoaded={handleFileLoad}
+                      inputId="csv-products"
+                      inputStyle={{ width: "100%" }}
+                    />
+                  </div>
+                  {csvData.length > 0 && (
+                    <p className="mt-3 text-sm text-base-content/60">
+                      <span className="font-medium text-base-content">{csvData.length}</span> row{csvData.length !== 1 ? "s" : ""} ready to import.
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex flex-col-reverse gap-2 border-t border-base-200 bg-base-200/40 px-5 py-3 sm:flex-row sm:justify-end">
                   <button
                     type="button"
-                    className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto"
-                    onClick={importProducts}
+                    className="btn btn-sm btn-ghost transition-colors duration-200 hover:bg-base-300/50"
+                    onClick={closeModal}
                   >
-                    Import
+                    Cancel
                   </button>
                   <button
                     type="button"
-                    className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
-                    onClick={() => importProductModalSetting()}
+                    className="btn btn-sm btn-primary transition-colors duration-200 hover:bg-opacity-90 disabled:btn-disabled"
+                    onClick={importProducts}
+                    disabled={csvData.length === 0}
                   >
-                    Cancel
+                    Import
                   </button>
                 </div>
               </Dialog.Panel>

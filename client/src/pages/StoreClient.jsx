@@ -1,14 +1,12 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import StoreDetails from "../components/StoreDetails";
-import AuthContext from "../AuthContext";
+import locationIcon from "../assets/location-icon.png";
 
 function StoreClient() {
   const [stores, setAllStores] = useState([]);
   const [filteredStores, setFilteredStores] = useState([]);
   const [selectedStore, setSelectedStore] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-
-  const authContext = useContext(AuthContext);
 
   useEffect(() => {
     fetchData();
@@ -40,16 +38,21 @@ function StoreClient() {
   };
 
   return (
-    <div className="col-span-12 lg:col-span-10 p-6 bg-gray-100 min-h-screen">
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h1 className="text-3xl font-bold mb-6">Manage Stores</h1>
-        <div className="flex justify-between mb-6">
+    <div className="col-span-12 lg:col-span-10 min-h-screen bg-base-200/40 p-4 md:p-6 font-['Inter','Segoe_UI','Roboto',sans-serif]">
+      <div className="rounded-xl border border-base-300 bg-base-100 p-5 shadow-sm">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-base-content">Stores Directory</h1>
+          <p className="mt-1 text-sm text-base-content/60">
+            Explore store locations and view details across the network.
+          </p>
+        </div>
+        <div className="mb-6">
           <input
             type="text"
             value={searchTerm}
             onChange={handleSearch}
             placeholder="Search by store name or city"
-            className="p-2 border rounded w-1/3"
+            className="input input-bordered input-sm w-full max-w-md border-base-300"
           />
         </div>
         {selectedStore && (
@@ -59,32 +62,35 @@ function StoreClient() {
             onClose={() => setSelectedStore(null)}
           />
         )}
-        <div className="flex flex-col gap-6 items-center">
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {filteredStores.map((element) => (
             <div
-              className="bg-white border-2 w-11/12 h-fit flex flex-col gap-4 p-4 rounded-lg shadow-md"
+              className="flex h-full flex-col gap-4 rounded-xl border border-base-300 bg-base-100 p-4 shadow-sm"
               key={element._id}
             >
               <div>
                 <img
                   alt="store"
-                  className="h-80 w-full object-cover rounded-lg"
+                  className="h-52 w-full rounded-lg border border-base-200 object-cover"
                   src={element.image}
                 />
               </div>
               <div className="flex flex-col gap-3 justify-between items-start">
-                <span className="font-bold text-lg">{element.name}</span>
-                <div className="flex justify-between w-full items-center">
-                  <div className="flex items-center">
+                <span className="text-lg font-bold text-base-content">{element.name}</span>
+                <div className="flex w-full flex-wrap items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center">
                     <img
                       alt="location-icon"
-                      className="h-6 w-6"
-                      src={require("../assets/location-icon.png")}
+                      className="h-5 w-5 flex-shrink-0"
+                      src={locationIcon}
                     />
-                    <span className="ml-2">{element.address + ", " + element.city}</span>
+                    <span className="ml-2 truncate text-sm text-base-content/70">
+                      {element.address + ", " + element.city}
+                    </span>
                   </div>
                   <button
-                    className="bg-green-500 hover:bg-green-700 text-white font-bold p-2 text-xs rounded"
+                    className="btn btn-sm btn-success text-white transition-colors duration-200 hover:bg-opacity-90"
                     onClick={() => showDetailsModal(element)}
                   >
                     More Details
@@ -93,6 +99,11 @@ function StoreClient() {
               </div>
             </div>
           ))}
+          {filteredStores.length === 0 && (
+            <div className="col-span-full rounded-xl border border-base-300 bg-base-100 p-8 text-center text-base-content/60 shadow-sm">
+              No stores match your search.
+            </div>
+          )}
         </div>
       </div>
     </div>
