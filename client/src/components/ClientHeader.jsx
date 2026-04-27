@@ -3,6 +3,7 @@ import { Menu, Transition } from "@headlessui/react";
 import AuthContext from "../AuthContext";
 import { Link } from "react-router-dom";
 import GridViewTwoToneIcon from "@mui/icons-material/GridViewTwoTone";
+import ThemeToggle from "./ThemeToggle";
 
 const userNavigation = [
   { name: "Sign Out", href: "/login" },
@@ -41,7 +42,9 @@ export default function ClientHeader() {
               <span className="block text-xs text-base-content/50">Client Portal</span>
             </div>
           </div>
-          <Menu as="div" className="relative ml-3">
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <Menu as="div" className="relative ml-1">
             <div>
               <Menu.Button className="flex items-center rounded-full border border-base-300 bg-base-100 py-1 pl-1.5 pr-2 text-sm transition-colors duration-200 hover:bg-base-200 focus:outline-none focus:ring-2 focus:ring-primary/40">
                 <span className="sr-only">Open user menu</span>
@@ -82,6 +85,7 @@ export default function ClientHeader() {
               </Menu.Items>
             </Transition>
           </Menu>
+          </div>
         </div>
       </div>
     </div>

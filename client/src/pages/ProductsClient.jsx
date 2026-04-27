@@ -4,11 +4,13 @@ import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
 import "ag-grid-enterprise";
 import ViewCart from "../components/ViewCart";
+import { useDaisyTheme, agGridThemeClassName } from "../hooks/useDaisyTheme";
 
 const categories = ["All", "Electronics", "Groceries", "Healthcare", "Clothing", "Beauty", "Toys", "Sports", "Home", "Books", "Automotive"];
 const itemsPerPageOptions = [10, 20, 50, 100];
 
 function ProductsClient() {
+  const theme = useDaisyTheme();
   const [showCartModal, setShowCartModal] = useState(false);
   const [products, setAllProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -259,7 +261,10 @@ function ProductsClient() {
             </div>
           </div>
 
-          <div className="ag-theme-alpine rounded-lg border border-base-200" style={{ width: "100%" }}>
+          <div
+            className={`${agGridThemeClassName(theme)} rounded-lg border border-base-200`}
+            style={{ width: "100%" }}
+          >
             <AgGridReact
               rowData={filteredProducts}
               columnDefs={columns}

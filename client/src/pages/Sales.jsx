@@ -7,8 +7,10 @@ import "ag-grid-enterprise";
 import AddSale from "../components/AddSale";
 import ImportSales from "../components/ImportSales";
 import AuthContext from "../AuthContext";
+import { useDaisyTheme, agGridThemeClassName } from "../hooks/useDaisyTheme";
 
 function Sales() {
+  const theme = useDaisyTheme();
   const [showSaleModal, setShowSaleModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [sales, setAllSalesData] = useState([]);
@@ -252,7 +254,10 @@ function Sales() {
             </div>
           </div>
 
-          <div className="ag-theme-alpine rounded-lg border border-base-200" style={{ width: "100%" }}>
+          <div
+            className={`${agGridThemeClassName(theme)} rounded-lg border border-base-200`}
+            style={{ width: "100%" }}
+          >
             <AgGridReact
               rowData={filteredData}
               columnDefs={columns}

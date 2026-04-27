@@ -7,10 +7,12 @@ import "ag-grid-enterprise";
 import AddProduct from "../components/AddProduct";
 import UpdateProduct from "../components/UpdateProduct";
 import ImportProducts from "../components/ImportProducts";
+import { useDaisyTheme, agGridThemeClassName } from "../hooks/useDaisyTheme";
 
 const DEFAULT_PAGE_SIZE = 20;
 
 function Inventory() {
+  const theme = useDaisyTheme();
   const [showProductModal, setShowProductModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -226,7 +228,10 @@ function Inventory() {
             </div>
           </div>
 
-          <div className="ag-theme-alpine rounded-lg border border-base-200" style={{ width: "100%" }}>
+          <div
+            className={`${agGridThemeClassName(theme)} rounded-lg border border-base-200`}
+            style={{ width: "100%" }}
+          >
             <AgGridReact
               rowData={filteredProducts}
               columnDefs={columns}

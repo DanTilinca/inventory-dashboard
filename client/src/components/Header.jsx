@@ -1,11 +1,12 @@
 import { Fragment, useContext, useState } from "react";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
-import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import AuthContext from "../AuthContext";
 import { Link, NavLink } from "react-router-dom";
 import GridViewTwoToneIcon from "@mui/icons-material/GridViewTwoTone";
 import InviteCodesModal from "./InviteCodeMenu";
 import AdminOptionsModal from "./AdminOptionsModal";
+import ThemeToggle from "./ThemeToggle";
 
 const navigation = [
   { name: "Dashboard", href: "/", exact: true },
@@ -101,16 +102,10 @@ export default function Header() {
                   </div>
 
                   <div className="hidden md:block">
-                    <div className="ml-4 flex items-center md:ml-6">
-                      <button
-                        type="button"
-                        className="rounded-full p-2 text-base-content/60 transition-colors duration-200 hover:bg-base-200 hover:text-base-content"
-                      >
-                        <span className="sr-only">View notifications</span>
-                        <BellIcon className="h-6 w-6" aria-hidden="true" />
-                      </button>
+                    <div className="ml-4 flex items-center gap-1 md:ml-6">
+                      <ThemeToggle />
 
-                      <Menu as="div" className="relative ml-3">
+                      <Menu as="div" className="relative ml-2">
                         <div>
                           <Menu.Button className="flex max-w-xs items-center rounded-full border border-base-300 bg-base-100 py-1 pl-1.5 pr-2 text-sm transition-colors duration-200 hover:bg-base-200 focus:outline-none focus:ring-2 focus:ring-primary/40">
                             <span className="sr-only">Open user menu</span>

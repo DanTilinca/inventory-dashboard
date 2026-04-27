@@ -7,8 +7,10 @@ import "ag-grid-enterprise";
 import AddPurchaseDetails from "../components/AddPurchaseDetails";
 import ImportPurchases from "../components/ImportPurchases";
 import AuthContext from "../AuthContext";
+import { useDaisyTheme, agGridThemeClassName } from "../hooks/useDaisyTheme";
 
 function PurchaseDetails() {
+  const theme = useDaisyTheme();
   const [showPurchaseModal, setPurchaseModal] = useState(false);
   const [showImportModal, setImportModal] = useState(false);
   const [purchase, setAllPurchaseData] = useState([]);
@@ -233,7 +235,10 @@ function PurchaseDetails() {
             </div>
           </div>
 
-          <div className="ag-theme-alpine rounded-lg border border-base-200" style={{ width: "100%" }}>
+          <div
+            className={`${agGridThemeClassName(theme)} rounded-lg border border-base-200`}
+            style={{ width: "100%" }}
+          >
             <AgGridReact
               rowData={filteredData}
               columnDefs={columns}
