@@ -1,6 +1,6 @@
 const Sales = require("../models/sales");
-const Product = require("../models/Product");
-const Store = require("../models/Store");
+const Product = require("../models/product");
+const Store = require("../models/store");
 const soldStock = require("./soldStock");
 
 // Add Sales

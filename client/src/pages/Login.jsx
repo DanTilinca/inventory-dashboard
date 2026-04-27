@@ -2,6 +2,10 @@ import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthContext from "../AuthContext";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  `http://localhost:${import.meta.env.VITE_API_PORT || "4000"}`;
+
 function Login() {
   const [form, setForm] = useState({
     email: "",
@@ -17,7 +21,7 @@ function Login() {
 
   const authCheck = () => {
     setTimeout(() => {
-      fetch("http://localhost:4000/api/login")
+      fetch(`${API_BASE_URL}/api/login`)
         .then((response) => response.json())
         .then((data) => {
           localStorage.setItem("user", JSON.stringify(data));
@@ -41,7 +45,7 @@ function Login() {
     if (form.email === "" || form.password === "") {
       alert("To login user, enter details to proceed...");
     } else {
-      fetch("http://localhost:4000/api/login", {
+      fetch(`${API_BASE_URL}/api/login`, {
         method: "POST",
         headers: {
           "Content-type": "application/json",

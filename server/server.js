@@ -1,96 +1,107 @@
 const express = require("express");
-const { main } = require("./models/index");
+const cors = require("cors");
+const dotenv = require("dotenv");
+const mongoose = require("mongoose");
 const productRoute = require("./router/product");
 const storeRoute = require("./router/store");
 const purchaseRoute = require("./router/purchase");
 const salesRoute = require("./router/sales");
-const cors = require("cors");
+const inviteCodeRouter = require("./router/inviteCode");
 const User = require("./models/users");
-const Product = require("./models/Product");
-const inviteCodeRouter = require('./router/inviteCode');
+const dns =require("dns");
 
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
+
+dotenv.config();
 
 const app = express();
-const PORT = 4000;
-main();
-app.use(express.json());
-app.use(cors());
+const PORT = Number(process.env.PORT) || 4000;
+const MONGODB_URI = process.env.MONGODB_URI;
 
-// Store API
-app.use("/api/store", storeRoute);
+let lastAuthenticatedUser = null;
 
-// Products API
-app.use("/api/product", productRoute);
+const connectDatabase = async () => {
+  if (!MONGODB_URI) {
+    throw new Error("MONGODB_URI is missing. Add it to server/.env");
+  }
 
-// Purchase API
-app.use("/api/purchase", purchaseRoute);
-
-// Sales API
-app.use("/api/sales", salesRoute);
-
-// Invite Code API
-app.use('/api/inviteCode', inviteCodeRouter);
-
-// ------------- Signin --------------
-let userAuthCheck;
-app.post("/api/login", async (req, res) => {
-  console.log(req.body);
-  // res.send("hi");
   try {
-    const user = await User.findOne({
-      email: req.body.email,
-      password: req.body.password,
-    });
-    console.log("USER: ", user);
-    if (user) {
-      res.send(user);
-      userAuthCheck = user;
-    } else {
-      res.status(401).send("Invalid Credentials");
-      userAuthCheck = null;
-    }
+    await mongoose.connect(MONGODB_URI);
+    console.log("MongoDB connection successful");
   } catch (error) {
-    console.log(error);
-    res.send(error);
+    console.error("MongoDB connection error:", error.message);
+  }
+};
+
+app.disable("x-powered-by");
+app.use(cors());
+app.use(express.json({ limit: "1mb" }));
+
+app.get("/api/health", (_req, res) => {
+  res.status(200).json({ ok: true });
+});
+
+app.use("/api/store", storeRoute);
+app.use("/api/product", productRoute);
+app.use("/api/purchase", purchaseRoute);
+app.use("/api/sales", salesRoute);
+app.use("/api/inviteCode", inviteCodeRouter);
+
+app.post("/api/login", async (req, res, next) => {
+  try {
+    const { email, password } = req.body || {};
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required." });
+    }
+
+    const user = await User.findOne({ email, password }).lean();
+    if (!user) {
+      lastAuthenticatedUser = null;
+      return res.status(401).json({ message: "Invalid credentials." });
+    }
+
+    lastAuthenticatedUser = user;
+    return res.status(200).json(user);
+  } catch (error) {
+    return next(error);
   }
 });
 
-// Getting User Details of login user
-app.get("/api/login", (req, res) => {
-  res.send(userAuthCheck);
+// Compatibility endpoint for legacy frontend logic.
+app.get("/api/login", (_req, res) => {
+  res.status(200).json(lastAuthenticatedUser || null);
 });
-// ------------------------------------
 
-// Registration API
-app.post("/api/register", (req, res) => {
-  let registerUser = new User({
-    firstName: req.body.firstName,
-    lastName: req.body.lastName,
-    email: req.body.email,
-    password: req.body.password,
-    phoneNumber: req.body.phoneNumber,
-    imageUrl: req.body.imageUrl,
-    isAdmin: req.body.isAdmin,
+app.post("/api/register", async (req, res, next) => {
+  try {
+    const registerUser = new User({
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      email: req.body.email,
+      password: req.body.password,
+      phoneNumber: req.body.phoneNumber,
+      imageUrl: req.body.imageUrl,
+      isAdmin: req.body.isAdmin,
+    });
+
+    const savedUser = await registerUser.save();
+    res.status(201).json(savedUser);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.use((err, _req, res, _next) => {
+  console.error("Unhandled server error:", err);
+  res.status(500).json({ message: "Internal server error." });
+});
+
+const startServer = async () => {
+  await connectDatabase();
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
   });
+};
 
-  registerUser
-    .save()
-    .then((result) => {
-      res.status(200).send(result);
-      alert("Signup Successfull");
-    })
-    .catch((err) => console.log("Signup: ", err));
-  console.log("request: ", req.body);
-});
-
-
-app.get("/testget", async (req,res)=>{
-  const result = await Product.findOne({ _id: '6429979b2e5434138eda1564'})
-  res.json(result)
-
-})
-
-// Here we are listening to the server
-app.listen(PORT, () => {
-  console.log("I am live again");
-});
+startServer();
