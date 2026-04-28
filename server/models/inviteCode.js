@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
 const InviteCodeSchema = new mongoose.Schema({
     code: {
@@ -7,5 +7,5 @@ const InviteCodeSchema = new mongoose.Schema({
       },
 });
 
-const InviteCode = mongoose.model("inviteCodes", InviteCodeSchema);
-module.exports = InviteCode;
+const InviteCode = mongoose.models.inviteCodes || mongoose.model("inviteCodes", InviteCodeSchema);
+export default InviteCode;

@@ -9,6 +9,20 @@ export default function ImportPurchases({ importPurchaseModalSetting, handlePage
   const [csvData, setCsvData] = useState([]);
   const authContext = useContext(AuthContext);
 
+  const parseDmyDate = (value) => {
+    if (!value || typeof value !== "string") {
+      return null;
+    }
+
+    const [day, month, year] = value.split("/");
+    if (!day || !month || !year) {
+      return null;
+    }
+
+    const parsedDate = new Date(Number(year), Number(month) - 1, Number(day));
+    return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+  };
+
   const closeModal = () => {
     setOpen(false);
     importPurchaseModalSetting();
@@ -21,12 +35,23 @@ export default function ImportPurchases({ importPurchaseModalSetting, handlePage
       headers.forEach((header, index) => {
         purchase[header] = row[index];
       });
+
+      const isEmptyRow = headers.every((header) => {
+        const value = purchase[header];
+        return value === undefined || value === null || String(value).trim() === "";
+      });
+
+      if (isEmptyRow) {
+        return null;
+      }
+
       purchase.userID = authContext.user;
-      purchase.QuantityPurchased = Number(purchase.QuantityPurchased);
-      purchase.TotalPurchaseAmount = Number(purchase.TotalPurchaseAmount);
-      purchase.PurchaseDate = new Date(purchase.PurchaseDate);
+      purchase.quantityPurchased = Number(purchase.quantityPurchased);
+      purchase.totalPurchaseAmount = Number(purchase.totalPurchaseAmount);
+      purchase.pricePerUnit = Number(purchase.pricePerUnit);
+      purchase.purchaseDate = parseDmyDate(purchase.purchaseDate);
       return purchase;
-    });
+    }).filter((purchase) => purchase !== null);
     setCsvData(formattedData);
   };
 

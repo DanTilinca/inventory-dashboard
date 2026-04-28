@@ -1,62 +1,72 @@
-const Purchase = require("../models/purchase");
-const Product = require("../models/product");
-const purchaseStock = require("./purchaseStock");
+import Purchase from "../models/purchase.js";
+import Product from "../models/product.js";
+import purchaseStock from "./purchaseStock.js";
 
 // Add Purchase Details
-const addPurchase = (req, res) => {
-  const addPurchaseDetails = new Purchase({
-    userID: req.body.userID,
-    ProductID: req.body.productID,
-    QuantityPurchased: req.body.quantityPurchased,
-    PurchaseDate: new Date(req.body.purchaseDate),
-    TotalPurchaseAmount: req.body.totalPurchaseAmount,
-    PricePerUnit: req.body.pricePerUnit,
-  });
-
-  addPurchaseDetails
-    .save()
-    .then((result) => {
-      purchaseStock(req.body.productID, req.body.quantityPurchased);
-      res.status(200).send(result);
-    })
-    .catch((err) => {
-      res.status(402).send(err);
+const addPurchase = async (req, res) => {
+  try {
+    const addPurchaseDetails = new Purchase({
+      userID: req.body.userID,
+      ProductID: req.body.productID,
+      QuantityPurchased: req.body.quantityPurchased,
+      PurchaseDate: new Date(req.body.purchaseDate),
+      TotalPurchaseAmount: req.body.totalPurchaseAmount,
+      PricePerUnit: req.body.pricePerUnit,
     });
+
+    const result = await addPurchaseDetails.save();
+    await purchaseStock(req.body.productID, req.body.quantityPurchased);
+    res.status(200).send(result);
+  } catch (err) {
+    res.status(500).send(err);
+  }
 };
 
 // Get All Purchase Data
 const getPurchaseData = async (req, res) => {
-  const findAllPurchaseData = await Purchase.find({})
-    .sort({ _id: -1 })
-    .populate("ProductID"); // -1 for descending order
-  res.json(findAllPurchaseData);
+  try {
+    const findAllPurchaseData = await Purchase.find({})
+      .sort({ _id: -1 })
+      .populate("ProductID"); // -1 for descending order
+    res.json(findAllPurchaseData);
+  } catch (err) {
+    res.status(500).send(err);
+  }
 };
 
 // Get total purchase amount
 const getTotalPurchaseAmount = async (req, res) => {
-  let totalPurchaseAmount = 0;
-  const purchaseData = await Purchase.find({});
-  purchaseData.forEach((purchase) => {
-    totalPurchaseAmount += purchase.TotalPurchaseAmount;
-  });
-  res.json({ totalPurchaseAmount });
+  try {
+    let totalPurchaseAmount = 0;
+    const purchaseData = await Purchase.find({});
+    purchaseData.forEach((purchase) => {
+      totalPurchaseAmount += purchase.TotalPurchaseAmount;
+    });
+    res.json({ totalPurchaseAmount });
+  } catch (err) {
+    res.status(500).send(err);
+  }
 };
 
 // Get total purchase amount in the last 30 days
 const getTotalPurchaseAmountLast30Days = async (req, res) => {
-  const date30DaysAgo = new Date();
-  date30DaysAgo.setDate(date30DaysAgo.getDate() - 30);
+  try {
+    const date30DaysAgo = new Date();
+    date30DaysAgo.setDate(date30DaysAgo.getDate() - 30);
 
-  const purchaseData = await Purchase.find({
-    PurchaseDate: { $gte: date30DaysAgo },
-  });
+    const purchaseData = await Purchase.find({
+      PurchaseDate: { $gte: date30DaysAgo },
+    });
 
-  let totalPurchaseAmount = 0;
-  purchaseData.forEach((purchase) => {
-    totalPurchaseAmount += purchase.TotalPurchaseAmount;
-  });
+    let totalPurchaseAmount = 0;
+    purchaseData.forEach((purchase) => {
+      totalPurchaseAmount += purchase.TotalPurchaseAmount;
+    });
 
-  res.json({ totalPurchaseAmount });
+    res.json({ totalPurchaseAmount });
+  } catch (err) {
+    res.status(500).send(err);
+  }
 };
 
 // Get number of purchases in the last 30 days
@@ -86,7 +96,7 @@ const importPurchases = async (req, res) => {
     const errors = [];
 
     // First, find all unique product names in the CSV
-    const productNames = [...new Set(purchases.map(purchase => purchase.ProductName))];
+    const productNames = [...new Set(purchases.map((purchase) => purchase.productName))];
 
     // Fetch the product IDs for these names
     const products = await Product.find({ name: { $in: productNames } });
@@ -97,21 +107,21 @@ const importPurchases = async (req, res) => {
     });
 
     // Replace product names with IDs in purchases
-    const purchasesWithIDs = purchases.map(purchase => {
-      const productID = productMap[purchase.ProductName];
+    const purchasesWithIDs = purchases.map((purchase) => {
+      const productID = productMap[purchase.productName];
       if (!productID) {
-        errors.push(`Product name "${purchase.ProductName}" not found`);
+        errors.push(`Product name "${purchase.productName}" not found`);
         return null;
       }
       return {
         userID: purchase.userID,
         ProductID: productID,
-        QuantityPurchased: purchase.QuantityPurchased,
-        PurchaseDate: purchase.PurchaseDate,
-        TotalPurchaseAmount: purchase.TotalPurchaseAmount,
-        PricePerUnit: purchase.PricePerUnit
+        QuantityPurchased: purchase.quantityPurchased,
+        PurchaseDate: purchase.purchaseDate,
+        TotalPurchaseAmount: purchase.totalPurchaseAmount,
+        PricePerUnit: purchase.pricePerUnit,
       };
-    }).filter(purchase => purchase !== null);
+    }).filter((purchase) => purchase !== null);
 
     if (errors.length > 0) {
       return res.status(400).send({ error: errors.join(", ") });
@@ -124,7 +134,7 @@ const importPurchases = async (req, res) => {
     res.status(200).send(result);
   } catch (err) {
     console.error("Error inserting purchases:", err);
-    res.status(400).send({ error: "Failed to import purchases" });
+    res.status(500).send({ error: "Failed to import purchases" });
   }
 };
 
@@ -187,7 +197,7 @@ const getPurchasesLast12Months = async (req, res) => {
 };
 
 
-module.exports = { 
+export {
   addPurchase, 
   getPurchaseData, 
   getTotalPurchaseAmount, 
@@ -196,5 +206,5 @@ module.exports = {
   importPurchases,
   deleteAllPurchases,
   getSpentLast12Months,
-  getPurchasesLast12Months
+  getPurchasesLast12Months,
 };

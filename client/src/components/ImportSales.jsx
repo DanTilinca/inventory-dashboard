@@ -9,6 +9,20 @@ export default function ImportSales({ importSalesModalSetting, handlePageUpdate 
   const [csvData, setCsvData] = useState([]);
   const authContext = useContext(AuthContext);
 
+  const parseDmyDate = (value) => {
+    if (!value || typeof value !== "string") {
+      return null;
+    }
+
+    const [day, month, year] = value.split("/");
+    if (!day || !month || !year) {
+      return null;
+    }
+
+    const parsedDate = new Date(Number(year), Number(month) - 1, Number(day));
+    return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+  };
+
   const closeModal = () => {
     setOpen(false);
     importSalesModalSetting();
@@ -21,12 +35,23 @@ export default function ImportSales({ importSalesModalSetting, handlePageUpdate 
       headers.forEach((header, index) => {
         sale[header] = row[index];
       });
+
+      const isEmptyRow = headers.every((header) => {
+        const value = sale[header];
+        return value === undefined || value === null || String(value).trim() === "";
+      });
+
+      if (isEmptyRow) {
+        return null;
+      }
+
       sale.userID = authContext.user;
-      sale.StockSold = Number(sale.StockSold);
-      sale.TotalSaleAmount = Number(sale.TotalSaleAmount);
-      sale.SaleDate = new Date(sale.SaleDate);
+      sale.stockSold = Number(sale.stockSold);
+      sale.totalSaleAmount = Number(sale.totalSaleAmount);
+      sale.pricePerUnit = Number(sale.pricePerUnit);
+      sale.saleDate = parseDmyDate(sale.saleDate);
       return sale;
-    });
+    }).filter((sale) => sale !== null);
     setCsvData(formattedData);
   };
 

@@ -1,6 +1,7 @@
-const express = require("express");
-const app = express();
-const product = require("../controller/product");
+import express from "express";
+import * as product from "../controller/product.js";
+
+const app = express.Router();
 
 // Add Product
 app.post("/add", product.addProduct);
@@ -35,4 +36,4 @@ app.get('/topProductsByStock', product.getTopProductsByStock);
 
 // http://localhost:4000/api/product/search?searchTerm=fa
 
-module.exports = app;
+export default app;

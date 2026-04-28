@@ -1,6 +1,7 @@
-const express = require("express");
+import express from "express";
+import * as inviteCode from "../controller/inviteCode.js";
+
 const router = express.Router();
-const inviteCode = require("../controller/inviteCode");
 
 // Check Invite Code
 router.get("/checkInviteCode/:code", inviteCode.checkInviteCode);
@@ -14,4 +15,4 @@ router.delete("/removeCode/:code", inviteCode.removeCode);
 // Get All Invite Codes
 router.get("/getAllCodes", inviteCode.getAllCodes);
 
-module.exports = router;
+export default router;

@@ -191,7 +191,7 @@ function Dashboard() {
       meta: `${purchaseCount} purchases in the last 30 days`,
     },
     {
-      title: "Inventory SKUs",
+      title: "Inventory",
       value: products.length.toLocaleString(),
       meta: "Products actively tracked",
     },

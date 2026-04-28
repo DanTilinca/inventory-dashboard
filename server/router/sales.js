@@ -1,6 +1,7 @@
-const express = require("express");
+import express from "express";
+import * as sales from "../controller/sales.js";
+
 const router = express.Router();
-const sales = require("../controller/sales");
 
 // Add Sales
 router.post("/add", sales.addSales);
@@ -35,7 +36,7 @@ router.post("/import", sales.importSales);
 // Delete All Sales
 router.delete("/deleteAll", sales.deleteAllSales);
 
-module.exports = router;
+export default router;
 
 // http://localhost:4000/api/sales/add POST
 // http://localhost:4000/api/sales/get GET

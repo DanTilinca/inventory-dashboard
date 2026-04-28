@@ -1,65 +1,75 @@
-const Sales = require("../models/sales");
-const Product = require("../models/product");
-const Store = require("../models/store");
-const soldStock = require("./soldStock");
+import Sales from "../models/sales.js";
+import Product from "../models/product.js";
+import Store from "../models/store.js";
+import soldStock from "./soldStock.js";
 
 // Add Sales
-const addSales = (req, res) => {
-  const addSale = new Sales({
-    userID: req.body.userID,
-    ProductID: req.body.productID,
-    StoreID: req.body.storeID,
-    StockSold: req.body.stockSold,
-    SaleDate: new Date(req.body.saleDate),
-    TotalSaleAmount: req.body.totalSaleAmount,
-    PricePerUnit: req.body.pricePerUnit,
-  });
-
-  addSale
-    .save()
-    .then((result) => {
-      soldStock(req.body.productID, req.body.stockSold);
-      res.status(200).send(result);
-    })
-    .catch((err) => {
-      res.status(402).send(err);
+const addSales = async (req, res) => {
+  try {
+    const addSale = new Sales({
+      userID: req.body.userID,
+      ProductID: req.body.productID,
+      StoreID: req.body.storeID,
+      StockSold: req.body.stockSold,
+      SaleDate: new Date(req.body.saleDate),
+      TotalSaleAmount: req.body.totalSaleAmount,
+      PricePerUnit: req.body.pricePerUnit,
     });
+
+    const result = await addSale.save();
+    await soldStock(req.body.productID, req.body.stockSold);
+    res.status(200).send(result);
+  } catch (err) {
+    res.status(500).send(err);
+  }
 };
 
 // Get All Sales Data
 const getSalesData = async (req, res) => {
-  const findAllSalesData = await Sales.find({})
-    .sort({ _id: -1 })
-    .populate("ProductID")
-    .populate("StoreID"); // -1 for descending order
-  res.json(findAllSalesData);
+  try {
+    const findAllSalesData = await Sales.find({})
+      .sort({ _id: -1 })
+      .populate("ProductID")
+      .populate("StoreID"); // -1 for descending order
+    res.json(findAllSalesData);
+  } catch (err) {
+    res.status(500).send(err);
+  }
 };
 
 // Get total sales amount
 const getTotalSalesAmount = async (req, res) => {
-  let totalSaleAmount = 0;
-  const salesData = await Sales.find({});
-  salesData.forEach((sale) => {
-    totalSaleAmount += sale.TotalSaleAmount;
-  });
-  res.json({ totalSaleAmount });
+  try {
+    let totalSaleAmount = 0;
+    const salesData = await Sales.find({});
+    salesData.forEach((sale) => {
+      totalSaleAmount += sale.TotalSaleAmount;
+    });
+    res.json({ totalSaleAmount });
+  } catch (err) {
+    res.status(500).send(err);
+  }
 };
 
 // Get total sales amount in the last 30 days
 const getTotalSalesAmountLast30Days = async (req, res) => {
-  const date30DaysAgo = new Date();
-  date30DaysAgo.setDate(date30DaysAgo.getDate() - 30);
+  try {
+    const date30DaysAgo = new Date();
+    date30DaysAgo.setDate(date30DaysAgo.getDate() - 30);
 
-  const salesData = await Sales.find({
-    SaleDate: { $gte: date30DaysAgo },
-  });
+    const salesData = await Sales.find({
+      SaleDate: { $gte: date30DaysAgo },
+    });
 
-  let totalSaleAmount = 0;
-  salesData.forEach((sale) => {
-    totalSaleAmount += sale.TotalSaleAmount;
-  });
+    let totalSaleAmount = 0;
+    salesData.forEach((sale) => {
+      totalSaleAmount += sale.TotalSaleAmount;
+    });
 
-  res.json({ totalSaleAmount });
+    res.json({ totalSaleAmount });
+  } catch (err) {
+    res.status(500).send(err);
+  }
 };
 
 // Get monthly sales in the last 12 months
@@ -118,8 +128,8 @@ const importSales = async (req, res) => {
     const errors = [];
 
     // First, find all unique product names and store names in the CSV
-    const productNames = [...new Set(sales.map(sale => sale.ProductName))];
-    const storeNames = [...new Set(sales.map(sale => sale.StoreName))];
+    const productNames = [...new Set(sales.map((sale) => sale.productName))];
+    const storeNames = [...new Set(sales.map((sale) => sale.storeName))];
 
     // Fetch the product IDs for these names
     const products = await Product.find({ name: { $in: productNames } });
@@ -140,20 +150,20 @@ const importSales = async (req, res) => {
     });
 
     // Replace product and store names with IDs in sales and check stock
-    const salesWithIDs = sales.map(sale => {
-      const productInfo = productMap[sale.ProductName];
-      const storeID = storeMap[sale.StoreName];
+    const salesWithIDs = sales.map((sale) => {
+      const productInfo = productMap[sale.productName];
+      const storeID = storeMap[sale.storeName];
 
       if (!productInfo) {
-        errors.push(`Product name "${sale.ProductName}" not found`);
+        errors.push(`Product name "${sale.productName}" not found`);
         return null;
       }
       if (!storeID) {
-        errors.push(`Store name "${sale.StoreName}" not found`);
+        errors.push(`Store name "${sale.storeName}" not found`);
         return null;
       }
 
-      let stockSold = sale.StockSold;
+      let stockSold = sale.stockSold;
 
       // Check if stock sold is greater than available stock
       if (productInfo.stock < stockSold) {
@@ -170,11 +180,11 @@ const importSales = async (req, res) => {
         ProductID: productInfo.id,
         StoreID: storeID,
         StockSold: stockSold,
-        SaleDate: new Date(sale.SaleDate),
-        TotalSaleAmount: sale.TotalSaleAmount * (stockSold / sale.StockSold), // Adjust total sale amount
-        PricePerUnit: sale.PricePerUnit
+        SaleDate: sale.saleDate,
+        TotalSaleAmount: sale.totalSaleAmount * (stockSold / sale.stockSold), // Adjust total sale amount
+        PricePerUnit: sale.pricePerUnit,
       };
-    }).filter(sale => sale !== null);
+    }).filter((sale) => sale !== null);
 
     if (errors.length > 0) {
       return res.status(400).send({ error: errors.join(", ") });
@@ -187,7 +197,7 @@ const importSales = async (req, res) => {
     res.status(200).send(result);
   } catch (err) {
     console.error("Error inserting sales:", err);
-    res.status(400).send({ error: "Failed to import sales" });
+    res.status(500).send({ error: "Failed to import sales" });
   }
 };
 
@@ -285,7 +295,7 @@ const getTopProductsBySales = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   addSales,
   getMonthlySales,
   getSalesData,
@@ -296,5 +306,5 @@ module.exports = {
   deleteAllSales,
   getEarnedLast12Months,
   getSalesLast12Months,
-  getTopProductsBySales
+  getTopProductsBySales,
 };

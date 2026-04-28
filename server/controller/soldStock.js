@@ -1,5 +1,4 @@
-const Sales = require("../models/sales");
-const Product = require("../models/product");
+import Product from "../models/product.js";
 
 
 const soldStock = async (productID, stockSoldData) => {
@@ -25,4 +24,4 @@ const soldStock = async (productID, stockSoldData) => {
   }
 };
 
-module.exports = soldStock;
+export default soldStock;

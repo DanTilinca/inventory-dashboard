@@ -1,6 +1,7 @@
-const express = require("express");
-const app = express();
-const store = require("../controller/store");
+import express from "express";
+import * as store from "../controller/store.js";
+
+const app = express.Router();
 
 // Add Store 
 app.post("/add", store.addStore);
@@ -8,4 +9,4 @@ app.post("/add", store.addStore);
 // Get All Stores
 app.get("/get", store.getAllStores);
 
-module.exports = app;
+export default app;

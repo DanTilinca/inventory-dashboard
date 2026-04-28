@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
 const UserSchema = new mongoose.Schema({
     firstName: 'String',
@@ -10,5 +10,5 @@ const UserSchema = new mongoose.Schema({
     isAdmin: { type: 'Boolean', default: false },
 });
 
-const User = mongoose.model("users", UserSchema);
-module.exports = User;
+const User = mongoose.models.users || mongoose.model("users", UserSchema);
+export default User;

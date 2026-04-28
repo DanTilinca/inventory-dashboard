@@ -1,47 +1,46 @@
-const Product = require("../models/product");
-const Purchase = require("../models/purchase");
-const Sales = require("../models/sales");
+import Product from "../models/product.js";
+import Purchase from "../models/purchase.js";
+import Sales from "../models/sales.js";
 
 // Add Product
-const addProduct = (req, res) => {
-  console.log("req: ", req.body.userId);
-  const addProduct = new Product({
-    userID: req.body.userId,
-    name: req.body.name,
-    category: req.body.category,
-    stock: 0,
-    description: req.body.description,
-  });
-
-  addProduct
-    .save()
-    .then((result) => {
-      res.status(200).send(result);
-    })
-    .catch((err) => {
-      res.status(402).send(err);
+const addProduct = async (req, res) => {
+  try {
+    console.log("req: ", req.body.userId);
+    const addProduct = new Product({
+      userID: req.body.userId,
+      name: req.body.name,
+      category: req.body.category,
+      stock: 0,
+      description: req.body.description,
     });
+
+    const result = await addProduct.save();
+    res.status(200).send(result);
+  } catch (err) {
+    res.status(500).send(err);
+  }
 };
 
 // Get All Products
 const getAllProducts = async (req, res) => {
-  const findAllProducts = await Product.find({}).sort({ _id: -1 }); // -1 for descending;
-  res.json(findAllProducts);
+  try {
+    const findAllProducts = await Product.find({}).sort({ _id: -1 }); // -1 for descending;
+    res.json(findAllProducts);
+  } catch (err) {
+    res.status(500).send(err);
+  }
 };
 
 // Delete Selected Product
 const deleteSelectedProduct = async (req, res) => {
-  const deleteProduct = await Product.deleteOne(
-    { _id: req.params.id }
-  );
-  const deletePurchaseProduct = await Purchase.deleteOne(
-    { ProductID: req.params.id }
-  );
-
-  const deleteSaleProduct = await Sales.deleteOne(
-    { ProductID: req.params.id }
-  );
-  res.json({ deleteProduct, deletePurchaseProduct, deleteSaleProduct });
+  try {
+    const deleteProduct = await Product.deleteOne({ _id: req.params.id });
+    const deletePurchaseProduct = await Purchase.deleteOne({ ProductID: req.params.id });
+    const deleteSaleProduct = await Sales.deleteOne({ ProductID: req.params.id });
+    res.json({ deleteProduct, deletePurchaseProduct, deleteSaleProduct });
+  } catch (err) {
+    res.status(500).send(err);
+  }
 };
 
 // Update Selected Product
@@ -60,17 +59,21 @@ const updateSelectedProduct = async (req, res) => {
     res.json(updatedResult);
   } catch (error) {
     console.log(error);
-    res.status(402).send("Error");
+    res.status(500).send("Error");
   }
 };
 
 // Search Products
 const searchProduct = async (req, res) => {
-  const searchTerm = req.query.searchTerm;
-  const products = await Product.find({
-    name: { $regex: searchTerm, $options: "i" },
-  });
-  res.json(products);
+  try {
+    const searchTerm = req.query.searchTerm;
+    const products = await Product.find({
+      name: { $regex: searchTerm, $options: "i" },
+    });
+    res.json(products);
+  } catch (err) {
+    res.status(500).send(err);
+  }
 };
 
 // Import Products
@@ -83,7 +86,7 @@ const importProducts = async (req, res) => {
     res.status(200).send(result);
   } catch (err) {
     console.error("Error inserting products:", err);
-    res.status(400).send({ error: "Failed to import products" });
+    res.status(500).send({ error: "Failed to import products" });
   }
 };
 
@@ -126,7 +129,7 @@ const getTopProductsByStock = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   addProduct,
   getAllProducts,
   deleteSelectedProduct,
@@ -135,5 +138,5 @@ module.exports = {
   importProducts,
   deleteAllProducts,
   getStockStatus,
-  getTopProductsByStock
+  getTopProductsByStock,
 };

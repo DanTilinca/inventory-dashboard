@@ -1,5 +1,4 @@
-const Purchase = require("../models/purchase");
-const Product = require("../models/product");
+import Product from "../models/product.js";
 
 const purchaseStock = async (productID, purchaseStockData) => {
   // Updating Purchase stock
@@ -20,4 +19,4 @@ const purchaseStock = async (productID, purchaseStockData) => {
   }
 };
 
-module.exports = purchaseStock;
+export default purchaseStock;

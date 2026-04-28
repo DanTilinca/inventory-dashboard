@@ -1,14 +1,14 @@
-const express = require("express");
-const cors = require("cors");
-const dotenv = require("dotenv");
-const mongoose = require("mongoose");
-const productRoute = require("./router/product");
-const storeRoute = require("./router/store");
-const purchaseRoute = require("./router/purchase");
-const salesRoute = require("./router/sales");
-const inviteCodeRouter = require("./router/inviteCode");
-const User = require("./models/users");
-const dns =require("dns");
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+import dns from "node:dns";
+import productRoute from "./router/product.js";
+import storeRoute from "./router/store.js";
+import purchaseRoute from "./router/purchase.js";
+import salesRoute from "./router/sales.js";
+import inviteCodeRouter from "./router/inviteCode.js";
+import authRouter from "./router/auth.js";
 
 dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
@@ -17,8 +17,6 @@ dotenv.config();
 const app = express();
 const PORT = Number(process.env.PORT) || 4000;
 const MONGODB_URI = process.env.MONGODB_URI;
-
-let lastAuthenticatedUser = null;
 
 const connectDatabase = async () => {
   if (!MONGODB_URI) {
@@ -46,51 +44,7 @@ app.use("/api/product", productRoute);
 app.use("/api/purchase", purchaseRoute);
 app.use("/api/sales", salesRoute);
 app.use("/api/inviteCode", inviteCodeRouter);
-
-app.post("/api/login", async (req, res, next) => {
-  try {
-    const { email, password } = req.body || {};
-
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required." });
-    }
-
-    const user = await User.findOne({ email, password }).lean();
-    if (!user) {
-      lastAuthenticatedUser = null;
-      return res.status(401).json({ message: "Invalid credentials." });
-    }
-
-    lastAuthenticatedUser = user;
-    return res.status(200).json(user);
-  } catch (error) {
-    return next(error);
-  }
-});
-
-// Compatibility endpoint for legacy frontend logic.
-app.get("/api/login", (_req, res) => {
-  res.status(200).json(lastAuthenticatedUser || null);
-});
-
-app.post("/api/register", async (req, res, next) => {
-  try {
-    const registerUser = new User({
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      email: req.body.email,
-      password: req.body.password,
-      phoneNumber: req.body.phoneNumber,
-      imageUrl: req.body.imageUrl,
-      isAdmin: req.body.isAdmin,
-    });
-
-    const savedUser = await registerUser.save();
-    res.status(201).json(savedUser);
-  } catch (error) {
-    next(error);
-  }
-});
+app.use("/api", authRouter);
 
 app.use((err, _req, res, _next) => {
   console.error("Unhandled server error:", err);

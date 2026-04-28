@@ -1,6 +1,7 @@
-const express = require("express");
+import express from "express";
+import * as purchase from "../controller/purchase.js";
+
 const router = express.Router();
-const purchase = require("../controller/purchase");
 
 // Add Purchase
 router.post("/add", purchase.addPurchase);
@@ -32,7 +33,7 @@ router.get('/spentLast12Months', purchase.getSpentLast12Months);
 // Number of purchases per month last 12 months
 router.get('/purchasesLast12Months', purchase.getPurchasesLast12Months);
 
-module.exports = router;
+export default router;
 
 // http://localhost:4000/api/purchase/add POST
 // http://localhost:4000/api/purchase/get GET
